@@ -12,6 +12,7 @@ import { aiAnalyzer } from "./aiAnalysis";
 import nodemailer from "nodemailer";
 import { generatePDFReport } from "./reportGenerator";
 import { decodeHash, decodeQRCode, universalDecode } from "./decodingService";
+import { emailPhishingService } from "./emailPhishingService";
 import multer from "multer";
 
 // Set up multer storage for file uploads
@@ -480,6 +481,93 @@ The SecureScan Team
       res.status(500).json({ 
         success: false, 
         message: `Failed to decode QR code: ${errorMessage}` 
+      });
+    }
+  });
+
+  // API endpoint for analyzing emails for phishing
+  app.post("/api/analyze-phishing", async (req, res) => {
+    try {
+      const { subject, content, sender, recipient, suspiciousUrls } = req.body;
+      
+      // Validate required fields
+      if (!content) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Email content is required" 
+        });
+      }
+      
+      // Analyze the email for phishing
+      const analysis = await emailPhishingService.analyzeEmail({
+        subject: subject || "",
+        content,
+        sender: sender || "",
+        recipient: recipient || "",
+        suspiciousUrls: suspiciousUrls || []
+      });
+      
+      res.json(analysis);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      console.error("Email phishing analysis error:", errorMessage);
+      res.status(500).json({ 
+        success: false, 
+        message: `Failed to analyze email: ${errorMessage}` 
+      });
+    }
+  });
+  
+  // API endpoint for storing email credentials
+  app.post("/api/email-credentials", async (req, res) => {
+    try {
+      const { 
+        email, 
+        password, 
+        provider, 
+        server, 
+        port, 
+        useTLS, 
+        autoScan, 
+        scanFrequency 
+      } = req.body;
+      
+      // Validate required fields
+      if (!email || !password || !provider) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Email, password, and provider are required" 
+        });
+      }
+      
+      // Check if Google Gemini API key is available for enhanced scanning
+      if (!process.env.GOOGLE_GEMINI_API_KEY) {
+        console.warn("No Google Gemini API key provided, AI-enhanced scanning will be limited");
+      }
+      
+      // Store the credentials securely
+      const result = await emailPhishingService.storeEmailCredentials({
+        email,
+        password,
+        provider,
+        server,
+        port,
+        useTLS: useTLS !== false, // Default to true if not specified
+        autoScan: autoScan === true,
+        scanFrequency: scanFrequency || "daily"
+      });
+      
+      res.json({
+        success: true,
+        message: "Email credentials stored successfully",
+        credentialId: result.credentialId
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      console.error("Email credentials storage error:", errorMessage);
+      res.status(500).json({ 
+        success: false,
+        message: `Failed to store email credentials: ${errorMessage}` 
       });
     }
   });
