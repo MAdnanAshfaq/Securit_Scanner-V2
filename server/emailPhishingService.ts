@@ -700,25 +700,63 @@ export class EmailPhishingService {
    */
   private generateSummary(isPhishing: boolean, riskScore: number, senderAnalysis: any, contentAnalysis: any, urlAnalysis: any) {
     if (isPhishing) {
-      let summary = "This email shows multiple indicators of being a phishing attempt. ";
+      let summary = "This email shows strong indicators of being a phishing attempt. ";
       
       if (senderAnalysis.suspicious) {
-        summary += "The sender appears suspicious. ";
+        summary += `The sender appears suspicious. ${senderAnalysis.details ? senderAnalysis.details + " " : ""} `;
       }
       
-      if (contentAnalysis.redFlags.length > 0) {
-        summary += `The content contains ${contentAnalysis.redFlags.length} red flags typical of phishing attempts. `;
+      if (contentAnalysis.redFlags && contentAnalysis.redFlags.length > 0) {
+        summary += `The content contains ${contentAnalysis.redFlags.length} red flags including: `;
+        contentAnalysis.redFlags.slice(0, 2).forEach((flag: any, index: number) => {
+          summary += `${index > 0 ? ", " : ""}${flag.type}${flag.description ? ` (${flag.description})` : ""}`;
+        });
+        if (contentAnalysis.redFlags.length > 2) {
+          summary += ` and ${contentAnalysis.redFlags.length - 2} more issues`;
+        }
+        summary += ". ";
       }
       
       if (urlAnalysis.maliciousCount > 0) {
-        summary += `${urlAnalysis.maliciousCount} out of ${urlAnalysis.count} URLs in the email appear malicious. `;
+        summary += `The email contains ${urlAnalysis.maliciousCount} suspicious URLs out of ${urlAnalysis.count} total links. `;
+        if (urlAnalysis.urls && urlAnalysis.urls.length > 0 && urlAnalysis.urls[0].malicious) {
+          summary += `For example: "${urlAnalysis.urls[0].url}" - ${urlAnalysis.urls[0].reason} `;
+        }
       }
       
-      return summary + "We recommend treating this email as a phishing attempt.";
+      return summary + "Take immediate remediation steps and do not interact with this email.";
     } else if (riskScore >= 3) {
-      return "This email has some characteristics that could indicate phishing, but isn't definitively malicious. Exercise caution and verify through official channels if you're unsure.";
+      let summary = "This email shows some suspicious characteristics but may not be a definitive phishing attempt. ";
+      
+      if (senderAnalysis.suspicious) {
+        summary += `The sender raises concerns: ${senderAnalysis.details ? senderAnalysis.details + " " : ""} `;
+      }
+      
+      if (contentAnalysis.redFlags && contentAnalysis.redFlags.length > 0) {
+        summary += `The content contains ${contentAnalysis.redFlags.length} concerning elements. `;
+      }
+      
+      if (urlAnalysis.maliciousCount > 0) {
+        summary += `${urlAnalysis.maliciousCount} out of ${urlAnalysis.count} URLs in the email appear suspicious. `;
+      }
+      
+      return summary + "Exercise caution when interacting with this email and verify through alternative channels before taking any action.";
     } else {
-      return "This email shows no strong indicators of being a phishing attempt and appears to be legitimate.";
+      let summary = "This email appears to be legitimate with no strong indicators of phishing. ";
+      
+      if (senderAnalysis.domainInfo && senderAnalysis.domainInfo.spf && senderAnalysis.domainInfo.dmarc) {
+        summary += "The sender domain has proper security controls (SPF/DMARC) in place. ";
+      }
+      
+      if (contentAnalysis.language) {
+        summary += `The message uses ${contentAnalysis.language.toLowerCase()} language style which is consistent with legitimate communication. `;
+      }
+      
+      if (urlAnalysis.count > 0 && urlAnalysis.maliciousCount === 0) {
+        summary += "All URLs in the email appear legitimate. ";
+      }
+      
+      return summary + "As a best practice, always remain vigilant with any email requesting sensitive information.";
     }
   }
   
@@ -732,8 +770,14 @@ export class EmailPhishingService {
       }
       
       const prompt = `
-        Analyze this email for signs of phishing. Look for red flags, linguistic manipulation, 
-        suspicious URLs, and social engineering tactics.
+        Analyze this email for signs of phishing. Conduct a thorough security analysis looking for:
+        1. Red flags in sender domain, format, and legitimacy
+        2. Linguistic manipulation and social engineering tactics
+        3. Suspicious URLs, redirects, or malformed links
+        4. Urgency or fear-based messaging
+        5. Requests for sensitive information
+        6. Inconsistencies in formatting or language
+        7. Technical deception indicators
         
         Subject: ${emailData.subject}
         From: ${emailData.sender}
@@ -746,8 +790,11 @@ export class EmailPhishingService {
         {
           "isPhishing": boolean (true/false),
           "confidence": number (0-1),
-          "reasons": array of strings explaining why,
+          "reasons": array of strings explaining why this is or isn't phishing,
           "manipulationTactics": array of strings describing manipulation tactics used,
+          "technicalIndicators": array of strings describing technical signs of phishing,
+          "securityRecommendations": array of strings with specific actions the user should take,
+          "threatLevel": string (either "Critical", "High", "Medium", "Low", or "Safe"),
           "additionalRiskScore": number (0-2) representing how much this should increase the risk score
         }
       `;

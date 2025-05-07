@@ -571,10 +571,73 @@ export default function PhishingDetector() {
                 </div>
 
                 {result.aiAnalysis && (
-                  <div>
-                    <h3 className="text-lg font-semibold mb-2">AI-Enhanced Analysis</h3>
-                    <p className="mb-2">Confidence: {Math.round((result.aiAnalysis.confidence || 0) * 100)}%</p>
-                    <p>{result.aiAnalysis.summary}</p>
+                  <div className="space-y-4 border rounded-lg p-4 bg-secondary/10">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold">AI-Enhanced Security Analysis</h3>
+                      {result.aiAnalysis.threatLevel && (
+                        <Badge variant={
+                          result.aiAnalysis.threatLevel === "Critical" ? "danger" :
+                          result.aiAnalysis.threatLevel === "High" ? "danger" :
+                          result.aiAnalysis.threatLevel === "Medium" ? "warning" :
+                          result.aiAnalysis.threatLevel === "Low" ? "warning" : "success"
+                        }>
+                          {result.aiAnalysis.threatLevel} Threat Level
+                        </Badge>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center text-sm">
+                      <div className="font-medium mr-1">AI Confidence:</div>
+                      <div className="flex items-center">
+                        <span className="mr-2">{Math.round((result.aiAnalysis.confidence || 0) * 100)}%</span>
+                        <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-primary" 
+                            style={{ width: `${Math.round((result.aiAnalysis.confidence || 0) * 100)}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {result.aiAnalysis.reasons && result.aiAnalysis.reasons.length > 0 && (
+                      <div className="space-y-2">
+                        <div className="font-medium">Key Security Findings:</div>
+                        <ul className="list-disc pl-5 space-y-1">
+                          {result.aiAnalysis.reasons.slice(0, 3).map((reason: string, index: number) => (
+                            <li key={index} className="text-sm">{reason}</li>
+                          ))}
+                          {result.aiAnalysis.reasons.length > 3 && (
+                            <li className="text-sm text-muted-foreground">
+                              +{result.aiAnalysis.reasons.length - 3} more findings
+                            </li>
+                          )}
+                        </ul>
+                      </div>
+                    )}
+                    
+                    {result.aiAnalysis.manipulationTactics && result.aiAnalysis.manipulationTactics.length > 0 && (
+                      <div className="space-y-2">
+                        <div className="font-medium">Manipulation Tactics Detected:</div>
+                        <div className="flex flex-wrap gap-1">
+                          {result.aiAnalysis.manipulationTactics.map((tactic: string, index: number) => (
+                            <Badge key={index} variant="outline" className="bg-destructive/10">
+                              {tactic.length > 30 ? tactic.substring(0, 27) + '...' : tactic}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {result.aiAnalysis.securityRecommendations && result.aiAnalysis.securityRecommendations.length > 0 && (
+                      <div className="space-y-2">
+                        <div className="font-medium">AI Security Recommendations:</div>
+                        <ul className="list-disc pl-5 space-y-1">
+                          {result.aiAnalysis.securityRecommendations.map((rec: string, index: number) => (
+                            <li key={index} className="text-sm">{rec}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
