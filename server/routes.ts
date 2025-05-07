@@ -1,5 +1,8 @@
-import type { Express } from "express";
+import express, { type Express } from "express";
 import { createServer, type Server } from "http";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 import { storage } from "./storage";
 import { scanWebsite } from "./scanEngine";
 import { performAttack } from "./attackEngine";
@@ -7,6 +10,11 @@ import { urlSchema, RiskLevel } from "@shared/schema";
 import { z } from "zod";
 import { aiAnalyzer } from "./aiAnalysis";
 import nodemailer from "nodemailer";
+import { generatePDFReport } from "./reportGenerator";
+
+// Get current directory equivalent to __dirname in ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // API endpoint to start a scan
@@ -230,6 +238,146 @@ ${message}
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
       console.error("Contact form error:", errorMessage);
       res.status(500).json({ message: `Failed to send contact form: ${errorMessage}` });
+    }
+  });
+
+  // Create a directory for reports if it doesn't exist
+  const reportsDir = path.join(__dirname, "..", "reports");
+  if (!fs.existsSync(reportsDir)) {
+    fs.mkdirSync(reportsDir, { recursive: true });
+  }
+
+  // Serve PDF reports statically
+  app.use("/reports", (req, res, next) => {
+    // Only allow access to PDF files
+    if (!req.path.endsWith(".pdf")) {
+      return res.status(404).send("Not found");
+    }
+    next();
+  }, express.static(reportsDir));
+
+  // API endpoint to generate PDF report for a scan
+  app.get("/api/generate-report", async (req, res) => {
+    try {
+      const latestScan = await storage.getLatestScan();
+      if (!latestScan) {
+        return res.status(404).json({ message: "No scan found" });
+      }
+      
+      // Generate the PDF report
+      const reportPath = await generatePDFReport(latestScan.id);
+      
+      // Get the filename from the path
+      const filename = path.basename(reportPath);
+      
+      // Return the URL to download the report
+      res.json({
+        success: true,
+        message: "Report generated successfully",
+        reportUrl: `/reports/${filename}`,
+        filename: filename
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      console.error("Report generation error:", errorMessage);
+      res.status(500).json({ 
+        success: false, 
+        message: `Failed to generate report: ${errorMessage}` 
+      });
+    }
+  });
+  
+  // API endpoint to email the PDF report
+  app.post("/api/email-report", async (req, res) => {
+    try {
+      const { email, reportUrl, scanUrl } = req.body;
+      
+      // Validate required fields
+      if (!email || !reportUrl) {
+        return res.status(400).json({ 
+          message: "Email and report URL are required" 
+        });
+      }
+      
+      // Get the full path to the report
+      const reportFilename = path.basename(reportUrl);
+      const reportPath = path.join(__dirname, "..", "reports", reportFilename);
+      
+      // Check if report exists
+      if (!fs.existsSync(reportPath)) {
+        return res.status(404).json({ 
+          message: "Report file not found" 
+        });
+      }
+      
+      // Create email transporter
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: "adnan.ashfaq@genesisengr.com",
+          pass: "danii$$$619."
+        }
+      });
+      
+      // Set up email data
+      const mailOptions = {
+        from: "adnan.ashfaq@genesisengr.com",
+        to: email,
+        subject: `Security Scan Report for ${scanUrl || 'Your Website'}`,
+        text: `
+Dear Security Professional,
+
+Attached is your comprehensive security vulnerability report for ${scanUrl || 'your website'}.
+
+This report contains detailed findings from our security scan, including:
+- Executive summary of vulnerabilities found
+- Detailed technical analysis of each issue
+- Severity ratings and risk assessment
+- Recommendations for remediation
+- Visual charts and statistics
+
+If you have any questions about this report or need assistance implementing the security recommendations, please contact our team.
+
+Best regards,
+The SecureScan Team
+        `,
+        html: `
+<h2>Security Vulnerability Report</h2>
+<p>Dear Security Professional,</p>
+<p>Attached is your comprehensive security vulnerability report for <strong>${scanUrl || 'your website'}</strong>.</p>
+<p>This report contains detailed findings from our security scan, including:</p>
+<ul>
+  <li>Executive summary of vulnerabilities found</li>
+  <li>Detailed technical analysis of each issue</li>
+  <li>Severity ratings and risk assessment</li>
+  <li>Recommendations for remediation</li>
+  <li>Visual charts and statistics</li>
+</ul>
+<p>If you have any questions about this report or need assistance implementing the security recommendations, please contact our team.</p>
+<p>Best regards,<br>The SecureScan Team</p>
+        `,
+        attachments: [
+          {
+            filename: reportFilename,
+            path: reportPath
+          }
+        ]
+      };
+      
+      // Send email
+      await transporter.sendMail(mailOptions);
+      
+      res.json({ 
+        success: true, 
+        message: "Report has been emailed successfully" 
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      console.error("Email report error:", errorMessage);
+      res.status(500).json({ 
+        success: false, 
+        message: `Failed to email report: ${errorMessage}` 
+      });
     }
   });
 
