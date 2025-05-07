@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { scanWebsite } from "./scanEngine";
-import { simulateAttack } from "./attackEngine";
+import { performAttack } from "./attackEngine";
 import { urlSchema, RiskLevel } from "@shared/schema";
 import { z } from "zod";
 
@@ -78,7 +78,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // API endpoint to perform attack simulations
+  // API endpoint to perform actual attacks
   app.post("/api/attack", async (req, res) => {
     try {
       // Extract parameters from request body
@@ -100,14 +100,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Target URL is required" });
       }
       
-      // Log the attack simulation attempt
-      console.log(`Attack simulation requested: ${attackType} on ${target}`);
+      // Log the attack attempt
+      console.log(`Attack requested: ${attackType} on ${target}`);
       
       // Display a warning that this should only be used ethically
       console.log("WARNING: This feature should only be used on websites you own or have permission to test");
       
-      // Perform the attack simulation
-      const result = await simulateAttack(
+      // Perform the actual attack
+      const result = await performAttack(
         attackType,
         target,
         method,
@@ -119,10 +119,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(result);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      console.error("Attack simulation error:", errorMessage);
+      console.error("Attack execution error:", errorMessage);
       res.status(500).json({ 
         success: false, 
-        results: `Attack simulation failed: ${errorMessage}` 
+        results: `Attack execution failed: ${errorMessage}` 
       });
     }
   });

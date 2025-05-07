@@ -4,15 +4,15 @@ import http from "http";
 import { ServerResponse, IncomingMessage } from "http";
 import crypto from "crypto";
 
-// Interfaces for attack simulation
+// Interfaces for attack execution
 interface AttackResult {
   success: boolean;
   results: string;
   details?: any;
 }
 
-// Main function to simulate various attacks
-export async function simulateAttack(
+// Main function to perform various attack types
+export async function performAttack(
   attackType: string,
   target: string,
   method: string = "GET",
@@ -22,37 +22,37 @@ export async function simulateAttack(
 ): Promise<AttackResult> {
   // Normalize the target URL
   const normalizedTarget = normalizeUrl(target);
-  console.log(`Simulating ${attackType} attack on ${normalizedTarget}`);
+  console.log(`Executing ${attackType} attack on ${normalizedTarget}`);
   
-  // Validate that the website is owned by the user
-  // Note: In a real application, this would verify ownership
-  // For demo purposes, we'll log a disclaimer and proceed
+  // IMPORTANT DISCLAIMER: 
+  // Perform ethical hacking only on systems you own or have explicit permission to test.
+  // Running these attacks on unauthorized systems is illegal and unethical.
 
   try {
-    // Route the attack to the appropriate simulation function
+    // Route the attack to the appropriate function
     switch (attackType) {
       case "sql-injection":
-        return await simulateSqlInjection(normalizedTarget, parameter, payload, options);
+        return await performSqlInjection(normalizedTarget, parameter, payload, options);
       case "xss":
-        return await simulateXss(normalizedTarget, parameter, payload, options);
+        return await performXss(normalizedTarget, parameter, payload, options);
       case "directory-traversal":
-        return await simulateDirectoryTraversal(normalizedTarget, parameter, payload, options);
+        return await performDirectoryTraversal(normalizedTarget, parameter, payload, options);
       case "file-inclusion":
-        return await simulateFileInclusion(normalizedTarget, parameter, payload, options);
+        return await performFileInclusion(normalizedTarget, parameter, payload, options);
       case "command-injection":
-        return await simulateCommandInjection(normalizedTarget, parameter, payload, options);
+        return await performCommandInjection(normalizedTarget, parameter, payload, options);
       case "ssrf":
-        return await simulateSsrf(normalizedTarget, parameter, payload, options);
+        return await performSsrf(normalizedTarget, parameter, payload, options);
       case "csrf":
-        return await simulateCsrf(normalizedTarget, method, parameter, payload, options);
+        return await performCsrf(normalizedTarget, method, parameter, payload, options);
       case "session-hijacking":
-        return await simulateSessionHijacking(normalizedTarget, parameter, payload, options);
+        return await performSessionHijacking(normalizedTarget, parameter, payload, options);
       case "brute-force":
-        return await simulateBruteForce(normalizedTarget, parameter, payload, options);
+        return await performBruteForce(normalizedTarget, parameter, payload, options);
       case "password-cracking":
-        return await simulatePasswordCracking(normalizedTarget, parameter, payload, options);
+        return await performPasswordCracking(normalizedTarget, parameter, payload, options);
       case "privilege-escalation":
-        return await simulatePrivilegeEscalation(normalizedTarget, parameter, payload, options);
+        return await performPrivilegeEscalation(normalizedTarget, parameter, payload, options);
       default:
         return {
           success: false,
@@ -60,10 +60,10 @@ export async function simulateAttack(
         };
     }
   } catch (error) {
-    console.error(`Error during ${attackType} attack simulation:`, error);
+    console.error(`Error during ${attackType} attack execution:`, error);
     return {
       success: false,
-      results: `Attack simulation failed: ${error instanceof Error ? error.message : "Unknown error"}`
+      results: `Attack execution failed: ${error instanceof Error ? error.message : "Unknown error"}`
     };
   }
 }
@@ -137,8 +137,8 @@ async function makeRequest(
   });
 }
 
-// SQL Injection attack simulation
-async function simulateSqlInjection(
+// SQL Injection attack execution
+async function performSqlInjection(
   target: string,
   parameter: string,
   payload: string,
@@ -220,8 +220,8 @@ async function simulateSqlInjection(
   }
 }
 
-// Cross-Site Scripting (XSS) attack simulation
-async function simulateXss(
+// Cross-Site Scripting (XSS) attack execution
+async function performXss(
   target: string,
   parameter: string,
   payload: string,
@@ -300,8 +300,8 @@ async function simulateXss(
   }
 }
 
-// Directory Traversal attack simulation
-async function simulateDirectoryTraversal(
+// Directory Traversal attack execution
+async function performDirectoryTraversal(
   target: string,
   parameter: string,
   payload: string,
@@ -384,8 +384,8 @@ async function simulateDirectoryTraversal(
   }
 }
 
-// File Inclusion attack simulation
-async function simulateFileInclusion(
+// File Inclusion attack execution
+async function performFileInclusion(
   target: string,
   parameter: string,
   payload: string,
@@ -496,8 +496,8 @@ async function simulateFileInclusion(
   }
 }
 
-// Command Injection attack simulation
-async function simulateCommandInjection(
+// Command Injection attack execution
+async function performCommandInjection(
   target: string,
   parameter: string,
   payload: string,
@@ -605,8 +605,8 @@ async function simulateCommandInjection(
   }
 }
 
-// Server-Side Request Forgery (SSRF) attack simulation
-async function simulateSsrf(
+// Server-Side Request Forgery (SSRF) attack execution
+async function performSsrf(
   target: string,
   parameter: string,
   payload: string,
@@ -691,8 +691,8 @@ async function simulateSsrf(
   }
 }
 
-// Cross-Site Request Forgery (CSRF) attack simulation
-async function simulateCsrf(
+// Cross-Site Request Forgery (CSRF) attack execution
+async function performCsrf(
   target: string,
   method: string,
   endpoint: string,
@@ -858,8 +858,8 @@ function generateCsrfForm(
   return formHtml;
 }
 
-// Session Hijacking attack simulation
-async function simulateSessionHijacking(
+// Session Hijacking attack execution
+async function performSessionHijacking(
   target: string,
   cookieName: string,
   cookieValue: string,
@@ -1018,8 +1018,8 @@ async function simulateSessionHijacking(
   }
 }
 
-// Brute Force attack simulation
-async function simulateBruteForce(
+// Brute Force attack execution
+async function performBruteForce(
   target: string,
   endpoint: string,
   username: string,
@@ -1066,7 +1066,7 @@ async function simulateBruteForce(
     
     let successfulPassword: string | null = null;
     
-    // Perform the brute force attack simulation
+    // Perform the brute force attack execution
     for (const password of selectedPasswords) {
       const startTime = Date.now();
       
@@ -1205,13 +1205,13 @@ async function simulateBruteForce(
   } catch (error) {
     return {
       success: false,
-      results: `Brute force attack simulation failed: ${error instanceof Error ? error.message : "Unknown error"}`
+      results: `Brute force attack execution failed: ${error instanceof Error ? error.message : "Unknown error"}`
     };
   }
 }
 
-// Password Cracking attack simulation
-async function simulatePasswordCracking(
+// Password Cracking attack execution
+async function performPasswordCracking(
   target: string,
   hashType: string,
   hash: string,
@@ -1388,8 +1388,8 @@ async function simulatePasswordCracking(
   }
 }
 
-// Privilege Escalation attack simulation
-async function simulatePrivilegeEscalation(
+// Privilege Escalation attack execution
+async function performPrivilegeEscalation(
   target: string,
   userRole: string,
   technique: string,
