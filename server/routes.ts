@@ -11,6 +11,14 @@ import { z } from "zod";
 import { aiAnalyzer } from "./aiAnalysis";
 import nodemailer from "nodemailer";
 import { generatePDFReport } from "./reportGenerator";
+import { decodeHash, decodeQRCode, universalDecode } from "./decodingService";
+import multer from "multer";
+
+// Set up multer storage for file uploads
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+});
 
 // Get current directory equivalent to __dirname in ESM
 const __filename = fileURLToPath(import.meta.url);
