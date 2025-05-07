@@ -1,4 +1,14 @@
-import { users, type User, type InsertUser, Scan, InsertScan, Vulnerability, InsertVulnerability } from "@shared/schema";
+import { eq, desc } from 'drizzle-orm';
+import { db } from './db';
+import * as schema from '@shared/schema';
+import { 
+  type User, 
+  type InsertUser, 
+  type Scan, 
+  type InsertScan, 
+  type Vulnerability, 
+  type InsertVulnerability 
+} from '@shared/schema';
 
 // Storage interface with scan-related operations
 export interface IStorage {
@@ -19,93 +29,91 @@ export interface IStorage {
   getVulnerabilitiesByScanId(scanId: number): Promise<Vulnerability[]>;
 }
 
-// In-memory storage implementation
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private scans: Map<number, Scan>;
-  private vulnerabilities: Map<number, Vulnerability>;
-  
-  private currentUserId: number;
-  private currentScanId: number;
-  private currentVulnerabilityId: number;
-
-  constructor() {
-    this.users = new Map();
-    this.scans = new Map();
-    this.vulnerabilities = new Map();
-    
-    this.currentUserId = 1;
-    this.currentScanId = 1;
-    this.currentVulnerabilityId = 1;
-  }
-
-  // User methods
+// Database storage implementation
+export class DatabaseStorage implements IStorage {
+  // User operations
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(schema.users).where(eq(schema.users.id, id));
+    return user;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    const [user] = await db.select().from(schema.users).where(eq(schema.users.username, username));
+    return user;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentUserId++;
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
+    const [user] = await db.insert(schema.users).values(insertUser).returning();
     return user;
   }
   
-  // Scan methods
+  // Scan operations
   async createScan(insertScan: InsertScan): Promise<Scan> {
-    const id = this.currentScanId++;
-    const scan: Scan = { 
-      ...insertScan, 
-      id,
+    // Make sure all required fields are set
+    const scanData = {
+      url: insertScan.url,
+      status: insertScan.status || 'pending',
+      startTime: insertScan.startTime || new Date(),
+      endTime: null,
+      serverInfo: null,
       highRiskCount: 0,
       mediumRiskCount: 0,
       lowRiskCount: 0,
       infoCount: 0
     };
-    this.scans.set(id, scan);
+    
+    const [scan] = await db.insert(schema.scans).values(scanData).returning();
     return scan;
   }
   
   async updateScan(scan: Scan): Promise<Scan> {
-    this.scans.set(scan.id, scan);
-    return scan;
+    const [updatedScan] = await db.update(schema.scans)
+      .set(scan)
+      .where(eq(schema.scans.id, scan.id))
+      .returning();
+    return updatedScan;
   }
   
   async getScanById(id: number): Promise<Scan | undefined> {
-    return this.scans.get(id);
+    const [scan] = await db.select().from(schema.scans).where(eq(schema.scans.id, id));
+    return scan;
   }
   
   async getLatestScan(): Promise<Scan | undefined> {
-    const scans = Array.from(this.scans.values());
-    if (scans.length === 0) return undefined;
-    
-    // Sort by ID in descending order to get the latest scan
-    return scans.sort((a, b) => b.id - a.id)[0];
+    const [scan] = await db.select().from(schema.scans).orderBy(desc(schema.scans.id)).limit(1);
+    return scan;
   }
   
-  // Vulnerability methods
+  // Vulnerability operations
   async createVulnerability(insertVulnerability: InsertVulnerability): Promise<Vulnerability> {
-    const id = this.currentVulnerabilityId++;
-    const vulnerability: Vulnerability = { ...insertVulnerability, id };
-    this.vulnerabilities.set(id, vulnerability);
+    // Make sure all nullable fields are explicitly set to null if not provided
+    const vulnData = {
+      ...insertVulnerability,
+      location: insertVulnerability.location || null,
+      details: insertVulnerability.details || null,
+      recommendation: insertVulnerability.recommendation || null,
+      learnMoreUrl: insertVulnerability.learnMoreUrl || null,
+    };
+    
+    const [vulnerability] = await db.insert(schema.vulnerabilities)
+      .values(vulnData)
+      .returning();
     return vulnerability;
   }
   
   async getVulnerabilityById(id: number): Promise<Vulnerability | undefined> {
-    return this.vulnerabilities.get(id);
+    const [vulnerability] = await db.select()
+      .from(schema.vulnerabilities)
+      .where(eq(schema.vulnerabilities.id, id));
+    return vulnerability;
   }
   
   async getVulnerabilitiesByScanId(scanId: number): Promise<Vulnerability[]> {
-    return Array.from(this.vulnerabilities.values())
-      .filter(vuln => vuln.scanId === scanId);
+    return db.select()
+      .from(schema.vulnerabilities)
+      .where(eq(schema.vulnerabilities.scanId, scanId));
   }
 }
 
 // Create and export the storage instance
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
