@@ -361,28 +361,24 @@ export class EmailPhishingService {
    */
   private decryptSensitiveData(encryptedData: string): string {
     try {
-      // In a production environment, this would use proper encryption
-      // For this demo, using a simple reversible encoding
+      // Split the IV and encrypted content
       const parts = encryptedData.split(':');
       if (parts.length !== 2) {
-        return '';
+        throw new Error('Invalid encrypted data format');
       }
       
       const iv = Buffer.from(parts[0], 'hex');
-      const encryptedText = Buffer.from(parts[1], 'hex');
+      const encryptedText = parts[1];
       
-      // Use a consistent key derived from environment
-      const key = crypto.scryptSync(
-        process.env.EMAIL_PASSWORD || 'defaultsecretkey',
-        'salt',
-        32
-      );
+      // Use the same key derivation as in encryption
+      const secretKey = process.env.EMAIL_PASSWORD || 'default_secure_key_for_email_encryption';
+      const key = crypto.createHash('sha256').update(String(secretKey)).digest('base64').substring(0, 32);
       
       const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
-      let decrypted = decipher.update(encryptedText);
-      decrypted = Buffer.concat([decrypted, decipher.final()]);
+      let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
+      decrypted += decipher.final('utf8');
       
-      return decrypted.toString();
+      return decrypted;
     } catch (error) {
       log(`Error decrypting data: ${error}`, "phishing");
       throw new Error('Failed to decrypt sensitive data');
@@ -802,12 +798,14 @@ export class EmailPhishingService {
    */
   private encryptSensitiveData(data: string): string {
     try {
-      // Generate a secure key for AES encryption
-      // In production, you'd want to store this key securely, not generate it each time
-      const key = crypto.scryptSync(process.env.EMAIL_ENCRYPTION_KEY || 'fallback_key', 'salt', 32);
+      // Use a consistent key derived from the environment variable
+      // In production, you'd use a properly secured encryption key
+      const secretKey = process.env.EMAIL_PASSWORD || 'default_secure_key_for_email_encryption';
+      const key = crypto.createHash('sha256').update(String(secretKey)).digest('base64').substring(0, 32);
+      
       const iv = crypto.randomBytes(16); // Initialization vector
       
-      // Create cipher
+      // Create cipher with our consistent key
       const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
       
       // Encrypt the data
