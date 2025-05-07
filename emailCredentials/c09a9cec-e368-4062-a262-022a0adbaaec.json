@@ -1,0 +1,12 @@
+{
+  "id": "c09a9cec-e368-4062-a262-022a0adbaaec",
+  "email": "adnan.ashfaq@genesisengr.com",
+  "password": "90cf7d9cf398bfc5e26c3a8370bf3410:d69a81cef5f428bdd0cc047edc151067",
+  "provider": "gmail",
+  "server": "imap.gmail.com",
+  "port": "993",
+  "useTLS": true,
+  "autoScan": true,
+  "scanFrequency": "weekly",
+  "dateAdded": "2025-05-07T18:42:09.637Z"
+}

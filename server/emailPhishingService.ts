@@ -7,6 +7,8 @@ import { log } from "./vite";
 import * as fs from "fs";
 import * as path from "path";
 import { fileURLToPath } from "url";
+import { ImapFlow } from 'imapflow';
+import { simpleParser } from 'mailparser';
 
 // Get current directory equivalent to __dirname in ESM
 const __filename = fileURLToPath(import.meta.url);
@@ -154,6 +156,236 @@ export class EmailPhishingService {
     } catch (error) {
       log(`Error storing email credentials: ${error}`, "phishing");
       throw new Error(`Failed to store email credentials: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+  
+  /**
+   * Get user emails from their account
+   * @param credentialId The ID of the stored credentials
+   * @param folder The email folder to fetch from (default: INBOX)
+   * @param limit The maximum number of emails to fetch (default: 20)
+   */
+  async fetchEmails(credentialId: string, folder: string = 'INBOX', limit: number = 20) {
+    try {
+      // Retrieve credentials
+      const credentials = await this.getStoredCredentials(credentialId);
+      if (!credentials) {
+        throw new Error('Credentials not found');
+      }
+      
+      // Create IMAP client
+      const client = new ImapFlow({
+        host: credentials.server,
+        port: parseInt(credentials.port),
+        secure: credentials.useTLS,
+        auth: {
+          user: credentials.email,
+          pass: this.decryptSensitiveData(credentials.password)
+        },
+        logger: false
+      });
+      
+      // Connect to the server
+      await client.connect();
+      
+      // Select and lock the mailbox
+      await client.mailboxOpen(folder);
+      
+      // Fetch the latest messages
+      const messages = [];
+      const range = (limit && !isNaN(limit)) ? `1:${limit}` : '1:20';
+      
+      // Process each message
+      for await (const message of client.fetch(range, { envelope: true, bodyStructure: true, source: true })) {
+        // Parse the raw email source
+        const parsed = await simpleParser(message.source);
+        
+        // Format the email for our system
+        const formattedEmail = {
+          id: message.uid,
+          subject: parsed.subject || '(No Subject)',
+          from: parsed.from?.text || '',
+          to: parsed.to?.text || '',
+          date: parsed.date?.toISOString() || new Date().toISOString(),
+          textContent: parsed.text || '',
+          htmlContent: parsed.html || '',
+          attachments: parsed.attachments?.map(att => ({
+            filename: att.filename,
+            contentType: att.contentType,
+            size: att.size
+          })) || [],
+          headers: parsed.headers,
+          flags: message.flags || []
+        };
+        
+        messages.push(formattedEmail);
+      }
+      
+      // Close the connection
+      await client.logout();
+      
+      return {
+        success: true,
+        folder,
+        count: messages.length,
+        emails: messages
+      };
+    } catch (error) {
+      log(`Error fetching emails: ${error}`, "phishing");
+      throw new Error(`Failed to fetch emails: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+  
+  /**
+   * Analyze a specific email from user's account
+   * @param credentialId The ID of the stored credentials
+   * @param messageId The ID of the email message to analyze
+   * @param folder The folder where the message is located
+   */
+  async analyzeEmailById(credentialId: string, messageId: number, folder: string = 'INBOX') {
+    try {
+      // Retrieve credentials
+      const credentials = await this.getStoredCredentials(credentialId);
+      if (!credentials) {
+        throw new Error('Credentials not found');
+      }
+      
+      // Create IMAP client
+      const client = new ImapFlow({
+        host: credentials.server,
+        port: parseInt(credentials.port),
+        secure: credentials.useTLS,
+        auth: {
+          user: credentials.email,
+          pass: this.decryptSensitiveData(credentials.password)
+        },
+        logger: false
+      });
+      
+      // Connect to the server
+      await client.connect();
+      
+      // Select and lock the mailbox
+      await client.mailboxOpen(folder);
+      
+      // Fetch the specific message
+      const message = await client.fetchOne(messageId, { envelope: true, bodyStructure: true, source: true });
+      if (!message) {
+        await client.logout();
+        throw new Error('Email not found');
+      }
+      
+      // Parse the raw email source
+      const parsed = await simpleParser(message.source);
+      
+      // Extract URLs from the email content
+      const urlRegex = /(https?:\/\/[^\s]+)/g;
+      const textContent = parsed.text || '';
+      const htmlContent = parsed.html || '';
+      
+      // Find all URLs in the email content
+      let suspiciousUrls: string[] = [];
+      const textUrls = textContent.match(urlRegex) || [];
+      
+      // Extract URLs from HTML using a simple regex approach
+      // In a real implementation, we would use a proper HTML parser
+      const hrefRegex = /href=["'](https?:\/\/[^"']+)["']/g;
+      let match;
+      const htmlUrls: string[] = [];
+      while ((match = hrefRegex.exec(htmlContent)) !== null) {
+        htmlUrls.push(match[1]);
+      }
+      
+      // Combine all found URLs
+      const allUrls = [...new Set([...textUrls, ...htmlUrls])];
+      
+      // Analyze the email
+      const analysis = await this.analyzeEmail({
+        subject: parsed.subject || '',
+        content: textContent || htmlContent || '',
+        sender: parsed.from?.text || '',
+        recipient: parsed.to?.text || '',
+        suspiciousUrls: allUrls
+      });
+      
+      // Close the connection
+      await client.logout();
+      
+      return {
+        success: true,
+        email: {
+          id: messageId,
+          subject: parsed.subject || '(No Subject)',
+          from: parsed.from?.text || '',
+          to: parsed.to?.text || '',
+          date: parsed.date?.toISOString() || new Date().toISOString(),
+          textContent: parsed.text || '',
+          htmlContent: parsed.html || '',
+          attachments: parsed.attachments?.map(att => ({
+            filename: att.filename,
+            contentType: att.contentType,
+            size: att.size
+          })) || [],
+          headers: parsed.headers
+        },
+        analysis
+      };
+    } catch (error) {
+      log(`Error analyzing email: ${error}`, "phishing");
+      throw new Error(`Failed to analyze email: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+  
+  /**
+   * Retrieve stored email credentials
+   * @param credentialId The ID of the credentials to retrieve
+   */
+  private async getStoredCredentials(credentialId: string) {
+    try {
+      const filePath = path.join(this.credentialsDir, `${credentialId}.json`);
+      if (!fs.existsSync(filePath)) {
+        return null;
+      }
+      
+      const fileData = fs.readFileSync(filePath, 'utf8');
+      return JSON.parse(fileData);
+    } catch (error) {
+      log(`Error retrieving credentials: ${error}`, "phishing");
+      return null;
+    }
+  }
+  
+  /**
+   * Decrypt sensitive data
+   * @param encryptedData The encrypted data to decrypt
+   */
+  private decryptSensitiveData(encryptedData: string): string {
+    try {
+      // In a production environment, this would use proper encryption
+      // For this demo, using a simple reversible encoding
+      const parts = encryptedData.split(':');
+      if (parts.length !== 2) {
+        return '';
+      }
+      
+      const iv = Buffer.from(parts[0], 'hex');
+      const encryptedText = Buffer.from(parts[1], 'hex');
+      
+      // Use a consistent key derived from environment
+      const key = crypto.scryptSync(
+        process.env.EMAIL_PASSWORD || 'defaultsecretkey',
+        'salt',
+        32
+      );
+      
+      const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
+      let decrypted = decipher.update(encryptedText);
+      decrypted = Buffer.concat([decrypted, decipher.final()]);
+      
+      return decrypted.toString();
+    } catch (error) {
+      log(`Error decrypting data: ${error}`, "phishing");
+      throw new Error('Failed to decrypt sensitive data');
     }
   }
   

@@ -395,7 +395,7 @@ The SecureScan Team
   });
 
   // API endpoint for hash decoding
-  app.all("/api/decode-hash", async (req, res) => {
+  app.post("/api/decode-hash", async (req, res) => {
     try {
       const { hash } = req.body;
       
@@ -425,7 +425,7 @@ The SecureScan Team
   });
   
   // API endpoint for universal decoding (handles any type of encoding/encryption)
-  app.all("/api/universal-decode", async (req, res) => {
+  app.post("/api/universal-decode", async (req, res) => {
     try {
       const { data } = req.body;
       
@@ -568,6 +568,61 @@ The SecureScan Team
       res.status(500).json({ 
         success: false,
         message: `Failed to store email credentials: ${errorMessage}` 
+      });
+    }
+  });
+  
+  // API endpoint to fetch emails from user's account
+  app.get("/api/emails/:credentialId", async (req, res) => {
+    try {
+      const { credentialId } = req.params;
+      const folder = req.query.folder as string || 'INBOX';
+      const limit = parseInt(req.query.limit as string || '20');
+      
+      if (!credentialId) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Credential ID is required" 
+        });
+      }
+      
+      // Fetch emails from the account
+      const result = await emailPhishingService.fetchEmails(credentialId, folder, limit);
+      
+      res.json(result);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      console.error("Email fetching error:", errorMessage);
+      res.status(500).json({ 
+        success: false, 
+        message: `Failed to fetch emails: ${errorMessage}` 
+      });
+    }
+  });
+  
+  // API endpoint to analyze a specific email
+  app.get("/api/analyze-email/:credentialId/:messageId", async (req, res) => {
+    try {
+      const { credentialId, messageId } = req.params;
+      const folder = req.query.folder as string || 'INBOX';
+      
+      if (!credentialId || !messageId) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Credential ID and message ID are required" 
+        });
+      }
+      
+      // Analyze the specific email
+      const result = await emailPhishingService.analyzeEmailById(credentialId, parseInt(messageId), folder);
+      
+      res.json(result);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      console.error("Email analysis error:", errorMessage);
+      res.status(500).json({ 
+        success: false, 
+        message: `Failed to analyze email: ${errorMessage}` 
       });
     }
   });
