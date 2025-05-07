@@ -393,6 +393,97 @@ The SecureScan Team
     }
   });
 
+  // API endpoint for hash decoding
+  app.post("/api/decode-hash", async (req, res) => {
+    try {
+      const { hash } = req.body;
+      
+      // Validate required fields
+      if (!hash) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Hash string is required" 
+        });
+      }
+      
+      // Perform hash decoding
+      const result = await decodeHash(hash);
+      
+      res.json({
+        success: true,
+        result
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      console.error("Hash decoding error:", errorMessage);
+      res.status(500).json({ 
+        success: false, 
+        message: `Failed to decode hash: ${errorMessage}` 
+      });
+    }
+  });
+  
+  // API endpoint for universal decoding (handles any type of encoding/encryption)
+  app.post("/api/universal-decode", async (req, res) => {
+    try {
+      const { data } = req.body;
+      
+      // Validate required fields
+      if (!data) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Encoded data string is required" 
+        });
+      }
+      
+      // Perform universal decoding
+      const result = await universalDecode(data);
+      
+      res.json({
+        success: true,
+        result
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      console.error("Universal decoding error:", errorMessage);
+      res.status(500).json({ 
+        success: false, 
+        message: `Failed to decode data: ${errorMessage}` 
+      });
+    }
+  });
+  
+  // API endpoint for QR code decoding
+  app.post("/api/decode-qr", upload.single('image'), async (req, res) => {
+    try {
+      // Check if file was uploaded
+      if (!req.file) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "No image file provided" 
+        });
+      }
+      
+      // Get image buffer from the uploaded file
+      const imageBuffer = req.file.buffer;
+      
+      // Perform QR code decoding
+      const result = await decodeQRCode(imageBuffer);
+      
+      res.json({
+        success: true,
+        result
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      console.error("QR decoding error:", errorMessage);
+      res.status(500).json({ 
+        success: false, 
+        message: `Failed to decode QR code: ${errorMessage}` 
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
