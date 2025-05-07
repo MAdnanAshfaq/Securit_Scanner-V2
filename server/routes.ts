@@ -5,6 +5,8 @@ import { scanWebsite } from "./scanEngine";
 import { performAttack } from "./attackEngine";
 import { urlSchema, RiskLevel } from "@shared/schema";
 import { z } from "zod";
+import { aiAnalyzer } from "./aiAnalysis";
+import nodemailer from "nodemailer";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // API endpoint to start a scan
@@ -124,6 +126,110 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: false, 
         results: `Attack execution failed: ${errorMessage}` 
       });
+    }
+  });
+  
+  // API endpoint to get AI-enhanced analysis for a vulnerability
+  app.get("/api/vulnerability-analysis/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid vulnerability ID" });
+      }
+      
+      // Get the vulnerability
+      const vulnerability = await storage.getVulnerabilityById(id);
+      if (!vulnerability) {
+        return res.status(404).json({ message: "Vulnerability not found" });
+      }
+      
+      // Generate AI-enhanced analysis
+      const analysis = await aiAnalyzer.analyzeVulnerability(vulnerability);
+      
+      if (!analysis) {
+        return res.status(503).json({ message: "AI analysis service unavailable" });
+      }
+      
+      res.json(analysis);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      console.error("AI analysis error:", errorMessage);
+      res.status(500).json({ message: `AI analysis failed: ${errorMessage}` });
+    }
+  });
+  
+  // API endpoint to get AI-enhanced scan report
+  app.get("/api/scan-report", async (req, res) => {
+    try {
+      const latestScan = await storage.getLatestScan();
+      if (!latestScan) {
+        return res.status(404).json({ message: "No scan found" });
+      }
+      
+      const vulnerabilities = await storage.getVulnerabilitiesByScanId(latestScan.id);
+      
+      // Generate AI-enhanced scan report
+      const report = await aiAnalyzer.generateScanReport(latestScan, vulnerabilities);
+      
+      if (!report) {
+        return res.status(503).json({ message: "AI report generation service unavailable" });
+      }
+      
+      res.json({ report });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      console.error("AI report generation error:", errorMessage);
+      res.status(500).json({ message: `AI report generation failed: ${errorMessage}` });
+    }
+  });
+  
+  // API endpoint for contact form
+  app.post("/api/contact", async (req, res) => {
+    try {
+      const { name, email, message, subject } = req.body;
+      
+      // Validate required fields
+      if (!name || !email || !message) {
+        return res.status(400).json({ message: "Name, email, and message are required" });
+      }
+      
+      // Create email transporter
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: "adnan.ashfaq@genesisengr.com",
+          pass: "danii$$$619."
+        }
+      });
+      
+      // Set up email data
+      const mailOptions = {
+        from: email,
+        to: "adnan.ashfaq@genesisengr.com",
+        subject: subject || `Contact Form Message from ${name}`,
+        text: `
+Name: ${name}
+Email: ${email}
+Message:
+${message}
+        `,
+        html: `
+<h2>Contact Form Submission</h2>
+<p><strong>Name:</strong> ${name}</p>
+<p><strong>Email:</strong> ${email}</p>
+<p><strong>Message:</strong></p>
+<p>${message.replace(/\n/g, '<br>')}</p>
+        `
+      };
+      
+      // Send email
+      await transporter.sendMail(mailOptions);
+      
+      res.json({ success: true, message: "Contact form submitted successfully" });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      console.error("Contact form error:", errorMessage);
+      res.status(500).json({ message: `Failed to send contact form: ${errorMessage}` });
     }
   });
 
