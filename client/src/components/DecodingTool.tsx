@@ -42,10 +42,24 @@ export default function DecodingTool({ initialTab = 'hash' }: DecodingToolProps)
 
     setIsLoading(prev => ({ ...prev, hash: true }));
     try {
-      const result = await apiRequest('/api/decode-hash', {
+      // Use fetch directly for better error handling instead of apiRequest
+      const response = await fetch('/api/decode-hash', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({ hash: hashInput.trim() })
       });
+      
+      if (!response.ok) {
+        throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.message || 'Unknown error occurred');
+      }
       
       setHashResult(result.result);
       toast({
@@ -77,10 +91,24 @@ export default function DecodingTool({ initialTab = 'hash' }: DecodingToolProps)
 
     setIsLoading(prev => ({ ...prev, universal: true }));
     try {
-      const result = await apiRequest('/api/universal-decode', {
+      // Use fetch directly for better error handling instead of apiRequest
+      const response = await fetch('/api/universal-decode', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({ data: universalInput.trim() })
       });
+      
+      if (!response.ok) {
+        throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.message || 'Unknown error occurred');
+      }
       
       setUniversalResult(result.result);
       toast({
