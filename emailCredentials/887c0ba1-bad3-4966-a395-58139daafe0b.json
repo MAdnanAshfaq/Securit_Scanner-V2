@@ -1,0 +1,12 @@
+{
+  "id": "887c0ba1-bad3-4966-a395-58139daafe0b",
+  "email": "wrgt.ricardo@gmail.com",
+  "password": "2bf313696a2ebf5069ffc3878ab16060:3c3f97b482400c3d72ba5a8127ac03ed",
+  "provider": "gmail",
+  "server": "imap.gmail.com",
+  "port": "993",
+  "useTLS": true,
+  "autoScan": true,
+  "scanFrequency": "daily",
+  "dateAdded": "2025-05-07T20:07:56.604Z"
+}
