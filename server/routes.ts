@@ -201,12 +201,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Name, email, and message are required" });
       }
       
-      // Create email transporter
+      // Create email transporter with secure configuration
       const transporter = nodemailer.createTransport({
-        service: "gmail",
+        host: "smtp.gmail.com",
+        port: 465,
+        secure: true, // use SSL
         auth: {
           user: "adnan.ashfaq@genesisengr.com",
-          pass: "danii$$$619."
+          pass: process.env.EMAIL_PASSWORD
         }
       });
       
@@ -310,12 +312,14 @@ ${message}
         });
       }
       
-      // Create email transporter
+      // Create email transporter with secure configuration
       const transporter = nodemailer.createTransport({
-        service: "gmail",
+        host: "smtp.gmail.com",
+        port: 465,
+        secure: true, // use SSL
         auth: {
           user: "adnan.ashfaq@genesisengr.com",
-          pass: "danii$$$619."
+          pass: process.env.EMAIL_PASSWORD
         }
       });
       

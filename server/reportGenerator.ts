@@ -84,19 +84,29 @@ export async function generatePDFReport(scanId: number): Promise<string> {
     // Add report footer
     addReportFooter(doc);
     
-    // Finalize the PDF
-    doc.end();
-    
-    // Return the path to the generated PDF
-    return new Promise((resolve, reject) => {
-      stream.on('finish', () => {
-        resolve(filePath);
-      });
+    // Finalize the PDF and handle errors
+    try {
+      doc.end();
       
-      stream.on('error', (err) => {
-        reject(err);
+      // Return the path to the generated PDF
+      return new Promise((resolve, reject) => {
+        stream.on('finish', () => {
+          resolve(filePath);
+        });
+        
+        stream.on('error', (err) => {
+          reject(err);
+        });
+        
+        // Add a timeout in case the stream doesn't finish properly
+        setTimeout(() => {
+          reject(new Error('PDF generation timed out'));
+        }, 10000);
       });
-    });
+    } catch (error) {
+      console.error('Error finalizing PDF:', error);
+      throw error;
+    }
   } catch (error) {
     console.error('PDF report generation failed:', error);
     throw error;
@@ -479,31 +489,15 @@ function addReportFooter(doc: PDFKit.PDFDocument) {
      .fillColor('#6b7280')
      .text(`Report generated on ${timestamp}`, { align: 'center' });
   
-  // Finalize the document first
-  doc.flushPages();
-  
-  // Get total number of pages
-  const range = doc.bufferedPageRange();
-  const pageCount = range.count;
-
-  // Add page numbers
-  for (let i = 0; i < pageCount; i++) {
-    try {
-      doc.switchToPage(i);
-      
-      // Add page number at the bottom with safe margins
-      doc.font('Helvetica')
-         .fontSize(10)
-         .fillColor('#6b7280')
-         .text(
-           `Page ${i + 1} of ${pageCount}`,
-           50,
-           doc.page.height - 70,
-           { align: 'center', width: doc.page.width - 100 }
-         );
-    } catch (err) {
-      console.warn(`Could not add page number to page ${i + 1}`, err);
-      continue;
-    }
-  }
+  // Instead of trying to add page numbers which can cause issues,
+  // Simply add a note at the bottom of the current page
+  doc.font('Helvetica')
+     .fontSize(10)
+     .fillColor('#6b7280')
+     .text(
+       'Note: This report may contain multiple pages with detailed findings.',
+       50,
+       doc.page.height - 70,
+       { align: 'center', width: doc.page.width - 100 }
+     );
 }
