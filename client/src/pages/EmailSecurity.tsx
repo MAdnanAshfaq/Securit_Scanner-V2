@@ -1,10 +1,16 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { Mail, CheckCircle, InboxIcon } from "lucide-react";
 import PhishingDetector from "@/components/PhishingDetector";
 import EmailCredentialsForm from "@/components/EmailCredentialsForm";
+import EmailViewer from "@/components/EmailViewer";
 
 export default function EmailSecurity() {
   const [activeTab, setActiveTab] = useState("analyze");
+  const [credentialId, setCredentialId] = useState<string | null>(null);
+  const { toast } = useToast();
 
   return (
     <div className="container py-8 space-y-8">
@@ -21,15 +27,48 @@ export default function EmailSecurity() {
         onValueChange={setActiveTab}
         className="w-full max-w-5xl mx-auto"
       >
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="analyze">Analyze Email Content</TabsTrigger>
           <TabsTrigger value="connect">Connect Email Account</TabsTrigger>
+          <TabsTrigger value="gmail" disabled={!credentialId}>
+            Gmail Inbox {credentialId ? <CheckCircle className="ml-1 h-3 w-3" /> : null}
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="analyze" className="mt-6">
           <PhishingDetector />
         </TabsContent>
         <TabsContent value="connect" className="mt-6">
-          <EmailCredentialsForm />
+          <div className="text-center mb-4">
+            <Mail className="h-12 w-12 mx-auto mb-2 text-primary/60" />
+            <h3 className="text-xl font-bold">Connect your Gmail account</h3>
+            <p className="text-muted-foreground">
+              Securely connect your Gmail account to analyze your emails for phishing attempts
+            </p>
+          </div>
+          <EmailCredentialsForm onCredentialsSaved={(id) => {
+            setCredentialId(id);
+            toast({
+              title: "Gmail Connected",
+              description: "Your Gmail account has been connected successfully",
+            });
+            setActiveTab("gmail");
+          }} />
+        </TabsContent>
+        <TabsContent value="gmail" className="mt-6">
+          {credentialId ? (
+            <EmailViewer credentialId={credentialId} />
+          ) : (
+            <div className="text-center py-10">
+              <InboxIcon className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-lg font-medium mb-2">No Email Account Connected</h3>
+              <p className="text-muted-foreground mb-4">
+                Connect your Gmail account to view and analyze your emails
+              </p>
+              <Button onClick={() => setActiveTab("connect")}>
+                Connect Gmail Account
+              </Button>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
 

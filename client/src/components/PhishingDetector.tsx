@@ -292,9 +292,9 @@ export default function PhishingDetector() {
     <div className="w-full max-w-4xl mx-auto space-y-8">
       <Card>
         <CardHeader>
-          <CardTitle>Email Phishing Detector</CardTitle>
+          <CardTitle>Email Content Analysis</CardTitle>
           <CardDescription>
-            Analyze an email to check if it's a potential phishing attempt
+            Paste the content of a suspicious email to analyze it for phishing indicators
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -508,8 +508,7 @@ export default function PhishingDetector() {
             </div>
           </CardHeader>
           
-          {/* Tab content */}
-          <div className="p-6">
+          <CardContent className="p-6">
             {/* Analysis Tab */}
             {activeTab === "analysis" && (
               <div className="space-y-6">
@@ -548,17 +547,15 @@ export default function PhishingDetector() {
                   </div>
                 )}
 
-                {result.urlAnalysis && result.urlAnalysis.urls && result.urlAnalysis.urls.some((url: any) => url.malicious) && (
+                {result.urlAnalysis && result.urlAnalysis.suspiciousUrls && result.urlAnalysis.suspiciousUrls.length > 0 && (
                   <div>
                     <h3 className="text-lg font-semibold mb-2">Suspicious URLs</h3>
                     <ul className="list-disc pl-5 space-y-2">
-                      {result.urlAnalysis.urls
-                        .filter((url: any) => url.malicious)
-                        .map((url: any, index: number) => (
-                          <li key={index}>
-                            <span className="font-medium text-red-500">{url.domain}</span>: {url.reason}
-                          </li>
-                        ))}
+                      {result.urlAnalysis.suspiciousUrls.map((url: any, index: number) => (
+                        <li key={index}>
+                          <span className="font-medium text-red-500">{url.url}</span>: {url.reason}
+                        </li>
+                      ))}
                     </ul>
                   </div>
                 )}
@@ -575,27 +572,8 @@ export default function PhishingDetector() {
                 {result.aiAnalysis && (
                   <div>
                     <h3 className="text-lg font-semibold mb-2">AI-Enhanced Analysis</h3>
-                    <p>Confidence: {Math.round((result.aiAnalysis.confidence || 0) * 100)}%</p>
-                    {result.aiAnalysis.reasons && (
-                      <div className="mt-2">
-                        <h4 className="font-medium">Reasons:</h4>
-                        <ul className="list-disc pl-5">
-                          {result.aiAnalysis.reasons.map((reason: string, index: number) => (
-                            <li key={index}>{reason}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    {result.aiAnalysis.manipulationTactics && (
-                      <div className="mt-2">
-                        <h4 className="font-medium">Manipulation Tactics:</h4>
-                        <ul className="list-disc pl-5">
-                          {result.aiAnalysis.manipulationTactics.map((tactic: string, index: number) => (
-                            <li key={index}>{tactic}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
+                    <p className="mb-2">Confidence: {Math.round((result.aiAnalysis.confidence || 0) * 100)}%</p>
+                    <p>{result.aiAnalysis.summary}</p>
                   </div>
                 )}
               </div>
@@ -604,63 +582,49 @@ export default function PhishingDetector() {
             {/* Remediation Wizard Tab */}
             {activeTab === "remediation" && (
               <div className="space-y-6">
-                <h3 className="text-lg font-semibold">Guided Remediation Wizard</h3>
-                <p className="text-muted-foreground">Follow these steps to address the detected phishing threat</p>
-                
-                {/* Progress indicator */}
-                <div className="flex justify-between mb-2">
-                  {remediationSteps.map((step, index) => (
-                    <div 
-                      key={index} 
-                      className={`flex flex-col items-center ${index <= currentStep ? "text-primary" : "text-muted-foreground"}`}
-                    >
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 ${
-                        index < currentStep 
-                          ? "bg-green-100 text-green-600 border border-green-600" 
-                          : index === currentStep 
-                            ? "bg-blue-100 text-blue-600 border border-blue-600" 
-                            : "bg-gray-100 text-gray-400 border border-gray-300"
-                      }`}>
-                        {index < currentStep ? (
-                          <CheckCircle className="h-5 w-5" />
-                        ) : (
-                          index + 1
-                        )}
-                      </div>
-                      <span className="text-xs hidden md:block">{step.title}</span>
-                    </div>
-                  ))}
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-lg font-semibold">Remediation Wizard</h3>
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    Step {currentStep + 1} of {remediationSteps.length}
+                  </div>
                 </div>
                 
-                {/* Step content */}
-                <div className="border rounded-lg p-4">
-                  <h4 className="text-lg font-medium mb-2">{remediationSteps[currentStep].title}</h4>
-                  <p className="mb-4">{remediationSteps[currentStep].description}</p>
-                  
-                  <ul className="space-y-2 mb-6">
-                    {remediationSteps[currentStep].tasks.map((task, index) => (
-                      <li key={index} className="flex items-start gap-2">
-                        <div className="mt-1 h-4 w-4 rounded-full border border-blue-500 flex-shrink-0" />
-                        <span>{task}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  
-                  <div className="flex justify-between">
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setCurrentStep(prev => Math.max(0, prev - 1))}
-                      disabled={currentStep === 0}
-                    >
-                      Previous Step
-                    </Button>
-                    <Button 
-                      onClick={() => setCurrentStep(prev => Math.min(remediationSteps.length - 1, prev + 1))}
-                      disabled={currentStep === remediationSteps.length - 1}
-                    >
-                      Next Step <ArrowRight className="ml-1 h-4 w-4" />
-                    </Button>
+                <div className="border rounded-lg p-6 bg-card space-y-4">
+                  <div className="space-y-2">
+                    <h4 className="text-xl font-semibold">{remediationSteps[currentStep].title}</h4>
+                    <p className="text-muted-foreground">{remediationSteps[currentStep].description}</p>
                   </div>
+                  
+                  <div className="pt-4">
+                    <h5 className="text-sm font-medium mb-3">Task Checklist:</h5>
+                    <ul className="space-y-3">
+                      {remediationSteps[currentStep].tasks.map((task, index) => (
+                        <li key={index} className="flex items-start gap-2">
+                          <div className="w-5 h-5 rounded-full border-2 border-primary flex-shrink-0 flex items-center justify-center mt-0.5">
+                            <CheckCircle className="h-3 w-3 text-primary" />
+                          </div>
+                          <span>{task}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+                
+                <div className="flex justify-between mt-6">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setCurrentStep(prev => Math.max(0, prev - 1))}
+                    disabled={currentStep === 0}
+                  >
+                    Previous Step
+                  </Button>
+                  
+                  <Button 
+                    onClick={() => setCurrentStep(prev => Math.min(remediationSteps.length - 1, prev + 1))}
+                    disabled={currentStep === remediationSteps.length - 1}
+                  >
+                    Next Step <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             )}
@@ -668,144 +632,73 @@ export default function PhishingDetector() {
             {/* Risk Heatmap Tab */}
             {activeTab === "heatmap" && (
               <div className="space-y-6">
-                <h3 className="text-lg font-semibold">Risk Heatmap</h3>
-                <p className="text-muted-foreground">Visual representation of risk factors with color-coded severity</p>
-                
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {/* Sender Domain Risk */}
-                  <div className={`p-4 rounded-lg border ${
-                    result.senderAnalysis && result.senderAnalysis.suspicious 
-                      ? "bg-red-50 border-red-200" 
-                      : "bg-green-50 border-green-200"
-                  }`}>
-                    <h4 className="font-medium mb-1">Sender Domain</h4>
-                    <div className={`text-lg font-bold ${
-                      result.senderAnalysis && result.senderAnalysis.suspicious 
-                        ? "text-red-600" 
-                        : "text-green-600"
-                    }`}>
-                      {result.senderAnalysis && result.senderAnalysis.suspicious 
-                        ? "High Risk" 
-                        : "Low Risk"}
-                    </div>
-                  </div>
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">Email Risk Heatmap</h3>
+                  <p className="text-muted-foreground mb-6">
+                    This heatmap illustrates the risk level of different elements in the analyzed email.
+                  </p>
                   
-                  {/* Content Risk */}
-                  <div className={`p-4 rounded-lg border ${
-                    result.contentAnalysis && result.contentAnalysis.redFlags && result.contentAnalysis.redFlags.length > 2
-                      ? "bg-red-50 border-red-200"
-                      : result.contentAnalysis && result.contentAnalysis.redFlags && result.contentAnalysis.redFlags.length > 0
-                        ? "bg-amber-50 border-amber-200"
-                        : "bg-green-50 border-green-200"
-                  }`}>
-                    <h4 className="font-medium mb-1">Email Content</h4>
-                    <div className={`text-lg font-bold ${
-                      result.contentAnalysis && result.contentAnalysis.redFlags && result.contentAnalysis.redFlags.length > 2
-                        ? "text-red-600"
-                        : result.contentAnalysis && result.contentAnalysis.redFlags && result.contentAnalysis.redFlags.length > 0
-                          ? "text-amber-600"
-                          : "text-green-600"
-                    }`}>
-                      {result.contentAnalysis && result.contentAnalysis.redFlags && result.contentAnalysis.redFlags.length > 2
-                        ? "High Risk"
-                        : result.contentAnalysis && result.contentAnalysis.redFlags && result.contentAnalysis.redFlags.length > 0
-                          ? "Medium Risk"
-                          : "Low Risk"}
-                    </div>
-                  </div>
-                  
-                  {/* URL Risk */}
-                  <div className={`p-4 rounded-lg border ${
-                    result.urlAnalysis && result.urlAnalysis.urls && result.urlAnalysis.urls.some(u => u.malicious)
-                      ? "bg-red-50 border-red-200"
-                      : "bg-green-50 border-green-200"
-                  }`}>
-                    <h4 className="font-medium mb-1">URLs</h4>
-                    <div className={`text-lg font-bold ${
-                      result.urlAnalysis && result.urlAnalysis.urls && result.urlAnalysis.urls.some(u => u.malicious)
-                        ? "text-red-600"
-                        : "text-green-600"
-                    }`}>
-                      {result.urlAnalysis && result.urlAnalysis.urls && result.urlAnalysis.urls.some(u => u.malicious)
-                        ? "High Risk"
-                        : "Low Risk"}
-                    </div>
-                  </div>
-                  
-                  {/* Language Risk */}
-                  <div className={`p-4 rounded-lg border ${
-                    result.contentAnalysis && result.contentAnalysis.languageAnalysis && result.contentAnalysis.languageAnalysis.suspicious
-                      ? "bg-amber-50 border-amber-200"
-                      : "bg-green-50 border-green-200"
-                  }`}>
-                    <h4 className="font-medium mb-1">Language</h4>
-                    <div className={`text-lg font-bold ${
-                      result.contentAnalysis && result.contentAnalysis.languageAnalysis && result.contentAnalysis.languageAnalysis.suspicious
-                        ? "text-amber-600"
-                        : "text-green-600"
-                    }`}>
-                      {result.contentAnalysis && result.contentAnalysis.languageAnalysis && result.contentAnalysis.languageAnalysis.suspicious
-                        ? "Medium Risk"
-                        : "Low Risk"}
-                    </div>
-                  </div>
-                  
-                  {/* Headers Risk */}
-                  <div className={`p-4 rounded-lg border ${
-                    result.headerAnalysis && result.headerAnalysis.suspicious
-                      ? "bg-amber-50 border-amber-200"
-                      : "bg-green-50 border-green-200"
-                  }`}>
-                    <h4 className="font-medium mb-1">Email Headers</h4>
-                    <div className={`text-lg font-bold ${
-                      result.headerAnalysis && result.headerAnalysis.suspicious
-                        ? "text-amber-600"
-                        : "text-green-600"
-                    }`}>
-                      {result.headerAnalysis && result.headerAnalysis.suspicious
-                        ? "Medium Risk"
-                        : "Low Risk"}
-                    </div>
-                  </div>
-                  
-                  {/* Overall Risk */}
-                  <div className={`p-4 rounded-lg border ${
-                    result.isPhishing
-                      ? "bg-red-50 border-red-200"
-                      : result.riskScore >= 3
-                        ? "bg-amber-50 border-amber-200"
-                        : "bg-green-50 border-green-200"
-                  }`}>
-                    <h4 className="font-medium mb-1">Overall</h4>
-                    <div className={`text-lg font-bold ${
-                      result.isPhishing
-                        ? "text-red-600"
-                        : result.riskScore >= 3
-                          ? "text-amber-600"
-                          : "text-green-600"
-                    }`}>
-                      {result.isPhishing
-                        ? "High Risk"
-                        : result.riskScore >= 3
-                          ? "Medium Risk"
-                          : "Low Risk"}
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Risk score legend */}
-                <div className="flex justify-center mt-4 gap-4">
-                  <div className="flex items-center">
-                    <div className="w-4 h-4 bg-green-500 rounded-full mr-2"></div>
-                    <span className="text-sm">Low Risk</span>
-                  </div>
-                  <div className="flex items-center">
-                    <div className="w-4 h-4 bg-amber-500 rounded-full mr-2"></div>
-                    <span className="text-sm">Medium Risk</span>
-                  </div>
-                  <div className="flex items-center">
-                    <div className="w-4 h-4 bg-red-500 rounded-full mr-2"></div>
-                    <span className="text-sm">High Risk</span>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Card className="border-l-4 border-l-amber-500">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-base">Sender Address</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex justify-between items-center">
+                          <span className="font-mono text-sm">{result?.sender || "unknown@example.com"}</span>
+                          <Badge variant={result?.senderAnalysis?.suspicious ? "destructive" : "outline"}>
+                            {result?.senderAnalysis?.suspicious ? "Suspicious" : "Legitimate"}
+                          </Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className={`border-l-4 ${result?.contentAnalysis?.redFlags?.length > 0 ? "border-l-red-500" : "border-l-green-500"}`}>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-base">Email Content</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex justify-between items-center">
+                          <span>Contains red flags</span>
+                          <Badge variant={result?.contentAnalysis?.redFlags?.length > 0 ? "destructive" : "outline"}>
+                            {result?.contentAnalysis?.redFlags?.length || 0} detected
+                          </Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className={`border-l-4 ${result?.urlAnalysis?.suspiciousUrls?.length > 0 ? "border-l-red-500" : "border-l-green-500"}`}>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-base">URLs & Links</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex justify-between items-center">
+                          <span>Suspicious URLs</span>
+                          <Badge variant={result?.urlAnalysis?.suspiciousUrls?.length > 0 ? "destructive" : "outline"}>
+                            {result?.urlAnalysis?.suspiciousUrls?.length || 0} detected
+                          </Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="border-l-4 border-l-blue-500">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-base">Overall Score</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex justify-between items-center">
+                          <span>Risk Rating</span>
+                          <Badge className="text-white" style={{
+                            backgroundColor: 
+                              result?.riskScore > 7 ? '#ef4444' : 
+                              result?.riskScore > 3 ? '#f59e0b' : 
+                              '#22c55e'
+                          }}>
+                            {result?.riskScore}/10
+                          </Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
                   </div>
                 </div>
               </div>
@@ -814,24 +707,45 @@ export default function PhishingDetector() {
             {/* Historical Trends Tab */}
             {activeTab === "history" && (
               <div className="space-y-6">
-                <h3 className="text-lg font-semibold">Historical Vulnerability Trends</h3>
-                <p className="text-muted-foreground">Track phishing attempts and vulnerabilities over time</p>
-                
-                {/* Sparkline chart */}
-                <div className="border rounded-lg p-4">
-                  <h4 className="text-md font-medium mb-4">Phishing Attempts (Last 10 Weeks)</h4>
-                  <div className="h-40 w-full">
-                    <canvas ref={chartRef} width="600" height="150"></canvas>
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">Historical Phishing Trends</h3>
+                  <p className="text-muted-foreground mb-6">
+                    Visualization of phishing trends detected by our system over time
+                  </p>
+                  
+                  <div className="mb-6">
+                    <canvas 
+                      ref={chartRef} 
+                      width="600" 
+                      height="150" 
+                      className="w-full h-auto"
+                    />
+                    <div className="flex justify-center mt-2 space-x-6">
+                      <div className="flex items-center">
+                        <span className="w-3 h-3 block bg-red-500 rounded-full mr-2"></span>
+                        <span className="text-xs">High Risk</span>
+                      </div>
+                      <div className="flex items-center">
+                        <span className="w-3 h-3 block bg-amber-500 rounded-full mr-2"></span>
+                        <span className="text-xs">Medium Risk</span>
+                      </div>
+                      <div className="flex items-center">
+                        <span className="w-3 h-3 block bg-green-500 rounded-full mr-2"></span>
+                        <span className="text-xs">Low Risk</span>
+                      </div>
+                    </div>
                   </div>
                   
-                  {/* Data table */}
-                  <Table className="mt-6">
-                    <TableCaption>Vulnerability trend over the last 10 weeks</TableCaption>
+                  <Table>
+                    <TableCaption>
+                      Recent phishing detection history across all users
+                    </TableCaption>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Date</TableHead>
-                        <TableHead>Count</TableHead>
+                        <TableHead>Detected Emails</TableHead>
                         <TableHead>Severity</TableHead>
+                        <TableHead className="text-right">Trend</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -840,15 +754,26 @@ export default function PhishingDetector() {
                           <TableCell>{data.date}</TableCell>
                           <TableCell>{data.count}</TableCell>
                           <TableCell>
-                            <span className={`px-2 py-1 rounded-full text-xs ${
-                              data.severity === 'high' 
-                                ? 'bg-red-100 text-red-800' 
-                                : data.severity === 'medium'
-                                  ? 'bg-amber-100 text-amber-800'
-                                  : 'bg-green-100 text-green-800'
-                            }`}>
-                              {data.severity.charAt(0).toUpperCase() + data.severity.slice(1)}
-                            </span>
+                            <Badge variant={
+                              data.severity === "high" ? "destructive" : 
+                              data.severity === "medium" ? "default" : 
+                              "outline"
+                            }>
+                              {data.severity}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {i > 0 ? (
+                              data.count > mockHistoricalData[i-1].count ? (
+                                <span className="text-red-500">+{data.count - mockHistoricalData[i-1].count}</span>
+                              ) : data.count < mockHistoricalData[i-1].count ? (
+                                <span className="text-green-500">-{mockHistoricalData[i-1].count - data.count}</span>
+                              ) : (
+                                <span className="text-gray-500">-</span>
+                              )
+                            ) : (
+                              <span className="text-gray-500">-</span>
+                            )}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -857,35 +782,9 @@ export default function PhishingDetector() {
                 </div>
               </div>
             )}
-          </div>
-          
-          <CardFooter className="flex justify-between border-t pt-4">
-            <Button variant="outline" onClick={() => form.reset()} className="flex items-center">
-              <Loader2 className="mr-2 h-4 w-4" />
-              New Analysis
-            </Button>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={shareReportByEmail}>
-                <Share2 className="mr-2 h-4 w-4" />
-                Share
-              </Button>
-              <Button variant="default" onClick={downloadPdfReport}>
-                <FileDown className="mr-2 h-4 w-4" />
-                PDF Report
-              </Button>
-            </div>
-          </CardFooter>
+          </CardContent>
         </Card>
       )}
-
-      <Alert>
-        <Shield className="h-4 w-4" />
-        <AlertTitle>Important Security Notice</AlertTitle>
-        <AlertDescription>
-          This tool performs a static analysis of email content and does not connect to your actual email account. 
-          For automated scanning of your inbox, use the email credential storage feature.
-        </AlertDescription>
-      </Alert>
     </div>
   );
 }

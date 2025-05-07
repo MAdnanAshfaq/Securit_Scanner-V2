@@ -27,7 +27,11 @@ const emailCredentialsSchema = z.object({
 
 type EmailCredentialsValues = z.infer<typeof emailCredentialsSchema>;
 
-export default function EmailCredentialsForm() {
+interface EmailCredentialsFormProps {
+  onCredentialsSaved?: (credentialId: string) => void;
+}
+
+export default function EmailCredentialsForm({ onCredentialsSaved }: EmailCredentialsFormProps) {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const { toast } = useToast();
@@ -70,6 +74,11 @@ export default function EmailCredentialsForm() {
         title: "Success",
         description: "Email credentials stored securely for scanning",
       });
+      
+      // Call the callback if provided
+      if (onCredentialsSaved && result.credentialId) {
+        onCredentialsSaved(result.credentialId);
+      }
     } catch (error) {
       toast({
         variant: "destructive",
