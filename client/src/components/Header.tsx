@@ -9,12 +9,15 @@ import {
 } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
 
+import { useAuth } from "@/contexts/AuthContext";
+import { LogOut } from "lucide-react";
+
 const navLinks = [
   { label: "Home", href: "/" },
   { label: "Features", href: "/#features" },
   { label: "Education", href: "/#education" },
-  { label: "Decoder", href: "/decoder" },
-  { label: "Email Security", href: "/email-security" },
+  { label: "Decoder", href: "/decoder", protected: true },
+  { label: "Email Security", href: "/email-security", protected: true },
   { label: "About", href: "/about" },
 ];
 
@@ -65,6 +68,18 @@ export default function Header() {
                 </li>
               ))}
             </ul>
+            <div className="flex items-center ml-6">
+              {isAuthenticated ? (
+                <Button variant="ghost" onClick={logout} size="sm">
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logout
+                </Button>
+              ) : (
+                <Button variant="default" onClick={() => handleNavigation('/login')} size="sm">
+                  Login
+                </Button>
+              )}
+            </div>
           </nav>
           
           {/* Mobile Navigation */}

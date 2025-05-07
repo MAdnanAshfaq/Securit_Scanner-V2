@@ -14,36 +14,19 @@ import EmailSecurity from "@/pages/EmailSecurity";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ServiceDrawer from "@/components/ServiceDrawer";
-
-function Router() {
-  return (
-    <div className="flex flex-col min-h-screen">
-      <Header />
-      <main className="flex-grow">
-        <Switch>
-          <Route path="/" component={Home} />
-          <Route path="/features" component={Features} />
-          <Route path="/education" component={Education} />
-          <Route path="/about" component={About} />
-          <Route path="/contact" component={Contact} />
-          <Route path="/decoder" component={Decoder} />
-          <Route path="/email-security" component={EmailSecurity} />
-          <Route component={NotFound} />
-        </Switch>
-      </main>
-      <Footer />
-    </div>
-  );
-}
+import Router from "@/Router";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Router />
-        <ServiceDrawer />
-      </TooltipProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Router />
+          <ServiceDrawer />
+        </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
