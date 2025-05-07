@@ -166,6 +166,7 @@ export class EmailPhishingService {
    * @param limit The maximum number of emails to fetch (default: 20)
    */
   async fetchEmails(credentialId: string, folder: string = 'INBOX', limit: number = 20) {
+    let client = null;
     try {
       // Retrieve credentials
       const credentials = await this.getStoredCredentials(credentialId);
@@ -173,56 +174,124 @@ export class EmailPhishingService {
         throw new Error('Credentials not found');
       }
       
-      // Create IMAP client
-      const client = new ImapFlow({
+      // For Gmail, we need to use special settings
+      const isGmail = credentials.email.toLowerCase().includes('gmail.com') || 
+                     credentials.server.toLowerCase().includes('gmail') || 
+                     credentials.server.toLowerCase().includes('google');
+                     
+      log(`Connecting to email server for ${credentials.email} (${credentials.server})`, "phishing");
+                     
+      // Create IMAP client with proper settings based on provider
+      client = new ImapFlow({
         host: credentials.server,
-        port: parseInt(credentials.port),
+        port: parseInt(credentials.port || '993'),
         secure: credentials.useTLS,
         auth: {
           user: credentials.email,
           pass: this.decryptSensitiveData(credentials.password)
         },
-        logger: false
+        // Special settings for Gmail
+        tls: {
+          rejectUnauthorized: false // Important for some providers including Gmail
+        },
+        logger: false,
+        // For Gmail, potentially need longer timeout
+        emitLogs: true,
+        clientInfo: { name: 'SecurityScanner' }
       });
       
-      // Connect to the server
-      await client.connect();
+      // Connect to the server with timeout
+      const connectPromise = client.connect();
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Connection timeout after 15 seconds')), 15000);
+      });
+      
+      await Promise.race([connectPromise, timeoutPromise]);
+      log("Successfully connected to mail server", "phishing");
       
       // Select and lock the mailbox
-      await client.mailboxOpen(folder);
+      const mailbox = await client.mailboxOpen(folder);
+      log(`Opened mailbox ${folder} with ${mailbox.exists || 0} messages`, "phishing");
+      
+      // If mailbox is empty or doesn't exist, return early
+      if (!mailbox.exists) {
+        await client.logout();
+        return {
+          success: true,
+          folder,
+          count: 0,
+          emails: []
+        };
+      }
       
       // Fetch the latest messages
       const messages = [];
-      const range = (limit && !isNaN(limit)) ? `1:${limit}` : '1:20';
       
-      // Process each message
-      for await (const message of client.fetch(range, { envelope: true, bodyStructure: true, source: true })) {
-        // Parse the raw email source
-        const parsed = await simpleParser(message.source);
-        
-        // Format the email for our system
-        const formattedEmail = {
-          id: message.uid,
-          subject: parsed.subject || '(No Subject)',
-          from: parsed.from?.text || '',
-          to: parsed.to?.text || '',
-          date: parsed.date?.toISOString() || new Date().toISOString(),
-          textContent: parsed.text || '',
-          htmlContent: parsed.html || '',
-          attachments: parsed.attachments?.map(att => ({
-            filename: att.filename,
-            contentType: att.contentType,
-            size: att.size
-          })) || [],
-          headers: parsed.headers,
-          flags: message.flags || []
-        };
-        
-        messages.push(formattedEmail);
+      // For Gmail, fetch newest messages first (highest UID to lowest)
+      let fetchRange = '';
+      
+      if (isGmail && mailbox.exists > 0) {
+        // For Gmail, fetch newest messages first (highest UID to lowest)
+        const endSeq = mailbox.exists;
+        const startSeq = Math.max(1, endSeq - limit + 1);
+        fetchRange = `${startSeq}:${endSeq}`;
+      } else {
+        // Standard range, limited to what's available
+        const count = Math.min(limit, mailbox.exists);
+        fetchRange = `1:${count}`;
       }
       
+      log(`Fetching email range: ${fetchRange}`, "phishing");
+      
+      // Process each message
+      try {
+        for await (const message of client.fetch(fetchRange, { envelope: true, bodyStructure: true, source: true })) {
+          try {
+            // Parse the raw email source
+            const parsed = await simpleParser(message.source);
+            
+            // Format the email for our system
+            const formattedEmail = {
+              id: message.uid,
+              subject: parsed.subject || '(No Subject)',
+              from: parsed.from?.text || '',
+              to: parsed.to?.text || '',
+              date: parsed.date?.toISOString() || new Date().toISOString(),
+              textContent: parsed.text || '',
+              htmlContent: parsed.html || '',
+              attachments: parsed.attachments?.map(att => ({
+                filename: att.filename || 'unnamed',
+                contentType: att.contentType || 'application/octet-stream',
+                size: att.size || 0
+              })) || [],
+              headers: parsed.headers,
+              flags: message.flags || []
+            };
+            
+            messages.push(formattedEmail);
+          } catch (parseError) {
+            log(`Error parsing message: ${parseError}`, "phishing");
+            // Continue with next message if one fails
+          }
+        }
+      } catch (fetchError) {
+        log(`Error during message fetch: ${fetchError}`, "phishing");
+        // If we have some messages, continue despite errors
+        if (messages.length === 0) {
+          throw fetchError;
+        }
+      }
+      
+      // Sort messages by date (most recent first)
+      messages.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      
       // Close the connection
-      await client.logout();
+      try {
+        await client.logout();
+      } catch (logoutError) {
+        log(`Error during logout: ${logoutError}`, "phishing");
+        // Continue despite logout error
+      }
       
       return {
         success: true,
@@ -232,6 +301,16 @@ export class EmailPhishingService {
       };
     } catch (error) {
       log(`Error fetching emails: ${error}`, "phishing");
+      
+      // Ensure connection is closed
+      if (client) {
+        try {
+          await client.logout();
+        } catch (logoutError) {
+          // Ignore logout errors during error handling
+        }
+      }
+      
       throw new Error(`Failed to fetch emails: ${error instanceof Error ? error.message : String(error)}`);
     }
   }

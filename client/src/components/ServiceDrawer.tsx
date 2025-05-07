@@ -104,7 +104,7 @@ export default function ServiceDrawer() {
                 <div className="p-2 rounded-md bg-primary/10 text-primary">
                   {service.icon}
                 </div>
-                <div>
+                <div className="flex-grow">
                   <div className="font-medium">{service.name}</div>
                   <div className="text-sm text-muted-foreground">{service.description}</div>
                 </div>
