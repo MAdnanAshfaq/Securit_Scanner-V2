@@ -11,7 +11,11 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { apiRequest } from '@/lib/queryClient';
 import { Clipboard, Check, AlertCircle, Upload, Search, Hash, Copy, Key, QrCode, FileCode, RefreshCw } from 'lucide-react';
 
-export default function DecodingTool() {
+interface DecodingToolProps {
+  initialTab?: 'hash' | 'universal' | 'qr';
+}
+
+export default function DecodingTool({ initialTab = 'hash' }: DecodingToolProps) {
   const { toast } = useToast();
   const [hashInput, setHashInput] = useState('');
   const [hashResult, setHashResult] = useState<any>(null);
@@ -180,7 +184,7 @@ export default function DecodingTool() {
         </p>
       </div>
 
-      <Tabs defaultValue="hash">
+      <Tabs defaultValue={initialTab}>
         <TabsList className="grid w-full grid-cols-3 mb-8">
           <TabsTrigger value="hash" className="flex items-center gap-2">
             <Hash className="h-4 w-4" />
@@ -306,19 +310,41 @@ export default function DecodingTool() {
                           <AccordionContent>
                             <div className="space-y-3">
                               <div>
-                                <span className="font-semibold">Algorithm:</span> {hashResult.securityAnalysis.algorithm}
+                                <span className="font-semibold">What type of hash is this?</span> <br/>
+                                <span className="text-sm text-gray-700">
+                                  {hashResult.securityAnalysis.algorithm === 'MD5' && 'This is an MD5 hash, which is an older algorithm commonly used for file verification but not secure for passwords.'}
+                                  {hashResult.securityAnalysis.algorithm === 'SHA1' && 'This is a SHA1 hash, which was once widely used but is now considered outdated for security-critical applications.'}
+                                  {hashResult.securityAnalysis.algorithm === 'SHA256' && 'This is a SHA256 hash, which is a modern, secure hashing algorithm widely used today.'}
+                                  {hashResult.securityAnalysis.algorithm === 'SHA512' && 'This is a SHA512 hash, which is a very secure algorithm used for sensitive data and high-security applications.'}
+                                  {hashResult.securityAnalysis.algorithm === 'SHA3' && 'This is a SHA3 hash, which is the newest and most secure SHA algorithm.'}
+                                  {hashResult.securityAnalysis.algorithm === 'BCRYPT' && 'This is a bcrypt hash, specifically designed for securely storing passwords.'}
+                                  {!['MD5', 'SHA1', 'SHA256', 'SHA512', 'SHA3', 'BCRYPT'].includes(hashResult.securityAnalysis.algorithm) && `This is a ${hashResult.securityAnalysis.algorithm} format.`}
+                                </span>
                               </div>
                               <div>
-                                <span className="font-semibold">Strength:</span>{' '}
-                                <Badge variant={
-                                  hashResult.securityAnalysis.strength.includes('weak') 
-                                    ? 'destructive' 
-                                    : hashResult.securityAnalysis.strength.includes('strong')
-                                      ? 'default'
-                                      : 'secondary'
-                                }>
-                                  {hashResult.securityAnalysis.strength}
-                                </Badge>
+                                <span className="font-semibold">How secure is this hash?</span><br/>
+                                <div className="flex items-center mt-1">
+                                  <Badge variant={
+                                    hashResult.securityAnalysis.strength.includes('weak') 
+                                      ? 'destructive' 
+                                      : hashResult.securityAnalysis.strength.includes('strong')
+                                        ? 'default'
+                                        : 'secondary'
+                                  }>
+                                    {hashResult.securityAnalysis.strength}
+                                  </Badge>
+                                  <span className="ml-2 text-sm text-gray-700">
+                                    {hashResult.securityAnalysis.strength.includes('weak') && 
+                                      'This type of hash is considered insecure and should not be used for passwords or sensitive data.'}
+                                    {hashResult.securityAnalysis.strength.includes('strong') && 
+                                      'This hash type is secure and appropriate for most security applications.'}
+                                    {hashResult.securityAnalysis.strength.includes('very strong') && 
+                                      'This hash type provides excellent security and is appropriate for even the most sensitive applications.'}
+                                    {!hashResult.securityAnalysis.strength.includes('weak') && 
+                                      !hashResult.securityAnalysis.strength.includes('strong') && 
+                                      'The security of this hash type is uncertain or depends on how it is being used.'}
+                                  </span>
+                                </div>
                               </div>
                               {hashResult.securityAnalysis.entropy !== undefined && (
                                 <div>
