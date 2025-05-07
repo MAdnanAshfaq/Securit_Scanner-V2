@@ -14,6 +14,7 @@ import { generatePDFReport } from "./reportGenerator";
 import { decodeHash, decodeQRCode, universalDecode } from "./decodingService";
 import { emailPhishingService } from "./emailPhishingService";
 import multer from "multer";
+import { log } from "./vite";
 
 // Set up multer storage for file uploads
 const upload = multer({
@@ -41,7 +42,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.status(400).json({ message: error.message });
       } else {
         const errorMessage = error instanceof Error ? error.message : "Unknown error";
-        console.error("Scan error:", errorMessage);
+        log("Scan error: " + errorMessage, "scan");
         res.status(500).json({ message: "Failed to perform scan" });
       }
     }

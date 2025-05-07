@@ -259,7 +259,7 @@ export class EmailPhishingService {
               date: parsed.date?.toISOString() || new Date().toISOString(),
               textContent: parsed.text || '',
               htmlContent: parsed.html || '',
-              attachments: parsed.attachments?.map(att => ({
+              attachments: parsed.attachments?.map((att: any) => ({
                 filename: att.filename || 'unnamed',
                 contentType: att.contentType || 'application/octet-stream',
                 size: att.size || 0
@@ -395,8 +395,9 @@ export class EmailPhishingService {
         htmlUrls.push(match[1]);
       }
       
-      // Combine all found URLs
-      const allUrls = [...new Set([...textUrls, ...htmlUrls])];
+      // Combine all found URLs and remove duplicates
+      const combinedUrls = [...textUrls, ...htmlUrls];
+      const allUrls = combinedUrls.filter((url, index) => combinedUrls.indexOf(url) === index);
       
       // Analyze the email
       const analysis = await this.analyzeEmail({
@@ -425,7 +426,7 @@ export class EmailPhishingService {
           date: parsed.date?.toISOString() || new Date().toISOString(),
           textContent: parsed.text || '',
           htmlContent: parsed.html || '',
-          attachments: parsed.attachments?.map(att => ({
+          attachments: parsed.attachments?.map((att: any) => ({
             filename: att.filename || 'unnamed',
             contentType: att.contentType || 'application/octet-stream',
             size: att.size || 0
@@ -674,7 +675,8 @@ export class EmailPhishingService {
     const extractedUrls = content.match(urlRegex) || [];
     
     // Combine with provided suspicious URLs and remove duplicates
-    const allUrls = Array.from(new Set([...extractedUrls, ...suspiciousUrls].filter(Boolean)));
+    const combinedUrlsList = [...extractedUrls, ...suspiciousUrls].filter(Boolean);
+    const allUrls = combinedUrlsList.filter((url, index) => combinedUrlsList.indexOf(url) === index);
     
     // Analyze each URL
     const analyzedUrls = allUrls.map(url => {
