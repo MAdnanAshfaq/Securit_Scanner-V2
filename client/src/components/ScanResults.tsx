@@ -3,11 +3,12 @@ import { useScan } from "@/hooks/useScan";
 import ScanProgress from "@/components/ScanProgress";
 import ScanSummary from "@/components/ScanSummary";
 import VulnerabilityItem from "@/components/VulnerabilityItem";
+import AttackSimulator from "@/components/AttackSimulator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { FileDown, Activity } from "lucide-react";
+import { FileDown, Activity, Zap } from "lucide-react";
 import { RiskLevel } from "@shared/schema";
 
 interface ScanResultsProps {
@@ -108,6 +109,13 @@ export default function ScanResults({ url }: ScanResultsProps) {
                       className="px-6 py-4 font-medium data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
                     >
                       Technologies
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="attack-simulator"
+                      className="px-6 py-4 font-medium data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none flex items-center"
+                    >
+                      <Zap className="h-4 w-4 mr-1" />
+                      Attack Simulator
                     </TabsTrigger>
                   </TabsList>
                 </div>
@@ -215,6 +223,10 @@ export default function ScanResults({ url }: ScanResultsProps) {
                       <p className="text-neutral-300">No technologies detected</p>
                     )}
                   </CardContent>
+                </TabsContent>
+                
+                <TabsContent value="attack-simulator" className="p-4">
+                  <AttackSimulator url={url} scan={scan} />
                 </TabsContent>
               </Tabs>
             </Card>
