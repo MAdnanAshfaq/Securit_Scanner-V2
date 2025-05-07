@@ -47,6 +47,7 @@ export default function ContactForm() {
       subject: "",
       message: "",
     },
+    mode: "onBlur",
   });
 
   // Form submission handler
@@ -54,11 +55,11 @@ export default function ContactForm() {
     try {
       setIsSubmitting(true);
       
-      const response = await apiRequest({
-        url: "/api/contact",
-        method: "POST",
-        body: data,
-      });
+      const response = await apiRequest(
+        "POST",
+        "/api/contact",
+        data
+      );
       
       if (response.ok) {
         toast({

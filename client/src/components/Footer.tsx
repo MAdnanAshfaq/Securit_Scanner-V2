@@ -1,86 +1,221 @@
-import { Shield, Send } from "lucide-react";
+import { Link } from "wouter";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { Separator } from "@/components/ui/separator";
+import { 
+  Github, 
+  Twitter, 
+  Linkedin, 
+  Mail,
+  Shield,
+  AlertTriangle,
+  FileText,
+  Users,
+  Book,
+  Heart
+} from "lucide-react";
 
 export default function Footer() {
-  const [email, setEmail] = useState("");
-  const { toast } = useToast();
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (email) {
-      // In a real implementation, this would send the email to a subscription service
-      toast({
-        title: "Thanks for subscribing!",
-        description: "You'll receive our security newsletter soon.",
-      });
-      setEmail("");
-    }
-  };
-
   return (
-    <footer className="bg-neutral-400 text-white py-8 border-t border-gray-700">
-      <div className="container mx-auto px-4">
+    <footer className="w-full py-12 bg-gray-900 text-gray-200">
+      <div className="container px-4 md:px-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div>
-            <div className="flex items-center mb-4">
-              <Shield className="h-5 w-5 mr-2" />
-              <h2 className="text-xl font-bold font-sans">SecureScope</h2>
+          {/* Company Info */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Company</h3>
+            <div className="flex items-start">
+              <Shield className="h-5 w-5 mr-2 text-blue-400" />
+              <span className="text-xl font-bold bg-gradient-to-r from-blue-400 to-violet-400 text-transparent bg-clip-text">
+                SecureScan
+              </span>
             </div>
-            <p className="text-neutral-200 text-sm">
-              Empowering ethical hackers and security professionals with powerful scanning tools.
+            <p className="text-sm text-gray-400">
+              Providing cutting-edge security assessment tools for ethical hackers and security professionals since 2023.
             </p>
+            <div className="flex space-x-4">
+              <a 
+                href="https://twitter.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-blue-400 transition-colors"
+              >
+                <Twitter className="h-5 w-5" />
+                <span className="sr-only">Twitter</span>
+              </a>
+              <a 
+                href="https://github.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-gray-200 transition-colors"
+              >
+                <Github className="h-5 w-5" />
+                <span className="sr-only">GitHub</span>
+              </a>
+              <a 
+                href="https://linkedin.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-blue-500 transition-colors"
+              >
+                <Linkedin className="h-5 w-5" />
+                <span className="sr-only">LinkedIn</span>
+              </a>
+              <a 
+                href="mailto:contact@securescan.com" 
+                className="text-gray-400 hover:text-red-400 transition-colors"
+              >
+                <Mail className="h-5 w-5" />
+                <span className="sr-only">Email</span>
+              </a>
+            </div>
           </div>
           
-          <div>
-            <h3 className="font-medium mb-4">Resources</h3>
-            <ul className="space-y-2 text-neutral-200">
-              <li><a href="#" className="hover:text-white transition-colors">Documentation</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">API Reference</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
+          {/* Quick Links */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Quick Links</h3>
+            <ul className="space-y-2">
+              <li>
+                <Link href="/" className="text-gray-400 hover:text-white transition-colors flex items-center">
+                  <Shield className="h-4 w-4 mr-2" />
+                  Home
+                </Link>
+              </li>
+              <li>
+                <Link href="/about" className="text-gray-400 hover:text-white transition-colors flex items-center">
+                  <Users className="h-4 w-4 mr-2" />
+                  About Us
+                </Link>
+              </li>
+              <li>
+                <Link href="/features" className="text-gray-400 hover:text-white transition-colors flex items-center">
+                  <AlertTriangle className="h-4 w-4 mr-2" />
+                  Features
+                </Link>
+              </li>
+              <li>
+                <Link href="/education" className="text-gray-400 hover:text-white transition-colors flex items-center">
+                  <Book className="h-4 w-4 mr-2" />
+                  Security Resources
+                </Link>
+              </li>
+              <li>
+                <a href="/contact" className="text-gray-400 hover:text-white transition-colors flex items-center">
+                  <Mail className="h-4 w-4 mr-2" />
+                  Contact
+                </a>
+              </li>
             </ul>
           </div>
           
-          <div>
-            <h3 className="font-medium mb-4">Company</h3>
-            <ul className="space-y-2 text-neutral-200">
-              <li><a href="/about" className="hover:text-white transition-colors">About Us</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
+          {/* Resources */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Resources</h3>
+            <ul className="space-y-2">
+              <li>
+                <a 
+                  href="https://owasp.org/www-project-top-ten/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-gray-400 hover:text-white transition-colors flex items-center"
+                >
+                  <AlertTriangle className="h-4 w-4 mr-2" />
+                  OWASP Top 10
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="https://www.sans.org/security-resources/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-gray-400 hover:text-white transition-colors flex items-center"
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  SANS Resources
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="https://nvd.nist.gov/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-gray-400 hover:text-white transition-colors flex items-center"
+                >
+                  <Shield className="h-4 w-4 mr-2" />
+                  NVD Database
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="https://cwe.mitre.org/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-gray-400 hover:text-white transition-colors flex items-center"
+                >
+                  <AlertTriangle className="h-4 w-4 mr-2" />
+                  CWE Top 25
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="https://www.first.org/cvss/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-gray-400 hover:text-white transition-colors flex items-center"
+                >
+                  <AlertTriangle className="h-4 w-4 mr-2" />
+                  CVSS Calculator
+                </a>
+              </li>
             </ul>
           </div>
           
-          <div>
-            <h3 className="font-medium mb-4">Stay Updated</h3>
-            <p className="text-neutral-200 text-sm mb-3">
-              Subscribe to our newsletter for the latest security updates.
+          {/* Newsletter Signup */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Stay Updated</h3>
+            <p className="text-sm text-gray-400">
+              Subscribe to our newsletter for the latest security news and updates.
             </p>
-            <form onSubmit={handleSubmit}>
-              <div className="flex">
+            <form className="space-y-2">
+              <div className="flex gap-2">
                 <Input 
                   type="email" 
-                  placeholder="Enter your email" 
-                  className="bg-neutral-300 text-black rounded-l-lg focus:outline-none flex-grow" 
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
+                  placeholder="Your email" 
+                  className="bg-gray-800 border-gray-700 focus:border-blue-500 text-white" 
                 />
                 <Button 
                   type="submit" 
-                  className="bg-primary hover:bg-blue-600 px-4 py-2 rounded-r-lg transition-colors"
+                  className="bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700"
                 >
-                  <Send className="h-4 w-4" />
+                  Subscribe
                 </Button>
               </div>
+              <p className="text-xs text-gray-500">
+                We respect your privacy. Unsubscribe at any time.
+              </p>
             </form>
           </div>
         </div>
         
-        <div className="border-t border-gray-700 mt-8 pt-8 text-center text-neutral-200 text-sm">
-          <p>&copy; {new Date().getFullYear()} SecureScope. All rights reserved.</p>
+        <Separator className="my-8 bg-gray-700" />
+        
+        <div className="flex flex-col md:flex-row items-center justify-between">
+          <p className="text-sm text-gray-400">
+            © 2023 SecureScan. All rights reserved.
+          </p>
+          <div className="flex gap-4 mt-4 md:mt-0">
+            <Link href="/privacy" className="text-xs text-gray-400 hover:text-white transition-colors">
+              Privacy Policy
+            </Link>
+            <Link href="/terms" className="text-xs text-gray-400 hover:text-white transition-colors">
+              Terms of Service
+            </Link>
+            <Link href="/disclaimer" className="text-xs text-gray-400 hover:text-white transition-colors">
+              Legal Disclaimer
+            </Link>
+          </div>
+          <p className="text-xs text-gray-500 mt-4 md:mt-0 flex items-center">
+            Made with <Heart className="h-3 w-3 mx-1 text-red-500" /> for security professionals
+          </p>
         </div>
       </div>
     </footer>

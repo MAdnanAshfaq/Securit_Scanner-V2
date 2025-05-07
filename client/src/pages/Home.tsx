@@ -4,6 +4,9 @@ import ScanResults from "@/components/ScanResults";
 import Disclaimer from "@/components/Disclaimer";
 import Features from "@/pages/Features";
 import Education from "@/pages/Education";
+import ContactForm from "@/components/ContactForm";
+import Resources from "@/components/Resources";
+import Footer from "@/components/Footer";
 
 export default function Home() {
   const [scanUrl, setScanUrl] = useState<string>("");
@@ -60,8 +63,27 @@ export default function Home() {
       {/* Education Section */}
       <Education />
 
+      {/* Resources Section */}
+      <Resources />
+      
+      {/* Contact Section */}
+      <section className="py-12 bg-gray-100 dark:bg-gray-800">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold">Contact Us</h2>
+            <p className="text-gray-600 dark:text-gray-400 mt-2">
+              Have questions about our security services? Get in touch with our team.
+            </p>
+          </div>
+          <ContactForm />
+        </div>
+      </section>
+      
       {/* Disclaimer Section */}
       <Disclaimer />
+      
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }
