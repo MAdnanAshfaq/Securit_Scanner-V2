@@ -13,6 +13,7 @@ import Decoder from "@/pages/Decoder";
 import EmailSecurity from "@/pages/EmailSecurity";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import ServiceDrawer from "@/components/ServiceDrawer";
 
 function Router() {
   return (
@@ -41,6 +42,7 @@ function App() {
       <TooltipProvider>
         <Toaster />
         <Router />
+        <ServiceDrawer />
       </TooltipProvider>
     </QueryClientProvider>
   );
