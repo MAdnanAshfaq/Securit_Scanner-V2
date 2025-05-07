@@ -12,7 +12,9 @@ import {
   FileText,
   Users,
   Book,
-  Heart
+  Heart,
+  Hash,
+  Search
 } from "lucide-react";
 
 export default function Footer() {
@@ -99,9 +101,46 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/decoder" className="text-gray-400 hover:text-white transition-colors flex items-center">
+                  <Hash className="h-4 w-4 mr-2" />
+                  Decoder Tool
+                </Link>
+              </li>
+              <li>
                 <Link href="/contact" className="text-gray-400 hover:text-white transition-colors flex items-center">
                   <Mail className="h-4 w-4 mr-2" />
                   Contact
+                </Link>
+              </li>
+            </ul>
+          </div>
+          
+          {/* Tools */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Security Tools</h3>
+            <ul className="space-y-2">
+              <li>
+                <Link href="/#scanner" className="text-gray-400 hover:text-white transition-colors flex items-center">
+                  <Search className="h-4 w-4 mr-2" />
+                  Website Scanner
+                </Link>
+              </li>
+              <li>
+                <Link href="/decoder" className="text-gray-400 hover:text-white transition-colors flex items-center">
+                  <Hash className="h-4 w-4 mr-2" />
+                  Hash Decoder
+                </Link>
+              </li>
+              <li>
+                <Link href="/decoder?tab=universal" className="text-gray-400 hover:text-white transition-colors flex items-center">
+                  <Hash className="h-4 w-4 mr-2" />
+                  Universal Decoder
+                </Link>
+              </li>
+              <li>
+                <Link href="/decoder?tab=qr" className="text-gray-400 hover:text-white transition-colors flex items-center">
+                  <Hash className="h-4 w-4 mr-2" />
+                  QR Code Decoder
                 </Link>
               </li>
             </ul>
@@ -142,28 +181,6 @@ export default function Footer() {
                 >
                   <Shield className="h-4 w-4 mr-2" />
                   NVD Database
-                </a>
-              </li>
-              <li>
-                <a 
-                  href="https://cwe.mitre.org/" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-gray-400 hover:text-white transition-colors flex items-center"
-                >
-                  <AlertTriangle className="h-4 w-4 mr-2" />
-                  CWE Top 25
-                </a>
-              </li>
-              <li>
-                <a 
-                  href="https://www.first.org/cvss/" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-gray-400 hover:text-white transition-colors flex items-center"
-                >
-                  <AlertTriangle className="h-4 w-4 mr-2" />
-                  CVSS Calculator
                 </a>
               </li>
             </ul>
