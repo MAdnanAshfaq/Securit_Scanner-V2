@@ -58,14 +58,14 @@ export default function ScanResults({ url }: ScanResultsProps) {
       type: "application/json",
     });
     
-    const url = URL.createObjectURL(reportBlob);
+    const downloadUrl = URL.createObjectURL(reportBlob);
     const a = document.createElement("a");
-    a.href = url;
+    a.href = downloadUrl;
     a.download = `securescope-report-${new Date().toISOString().split("T")[0]}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    URL.revokeObjectURL(downloadUrl);
   };
 
   return (
