@@ -14,6 +14,7 @@ const navLinks = [
   { label: "Features", href: "/#features" },
   { label: "Education", href: "/#education" },
   { label: "Decoder", href: "/decoder" },
+  { label: "Email Security", href: "/email-security" },
   { label: "About", href: "/about" },
 ];
 

@@ -10,6 +10,7 @@ import Education from "@/pages/Education";
 import About from "@/pages/About";
 import Contact from "@/pages/Contact";
 import Decoder from "@/pages/Decoder";
+import EmailSecurity from "@/pages/EmailSecurity";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
@@ -25,6 +26,7 @@ function Router() {
           <Route path="/about" component={About} />
           <Route path="/contact" component={Contact} />
           <Route path="/decoder" component={Decoder} />
+          <Route path="/email-security" component={EmailSecurity} />
           <Route component={NotFound} />
         </Switch>
       </main>

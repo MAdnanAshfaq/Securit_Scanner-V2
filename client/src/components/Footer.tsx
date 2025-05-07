@@ -14,7 +14,8 @@ import {
   Book,
   Heart,
   Hash,
-  Search
+  Search,
+  MailQuestion
 } from "lucide-react";
 
 export default function Footer() {
@@ -107,6 +108,12 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/email-security" className="text-gray-400 hover:text-white transition-colors flex items-center">
+                  <MailQuestion className="h-4 w-4 mr-2" />
+                  Email Security
+                </Link>
+              </li>
+              <li>
                 <Link href="/contact" className="text-gray-400 hover:text-white transition-colors flex items-center">
                   <Mail className="h-4 w-4 mr-2" />
                   Contact
@@ -141,6 +148,12 @@ export default function Footer() {
                 <Link href="/decoder?tab=qr" className="text-gray-400 hover:text-white transition-colors flex items-center">
                   <Hash className="h-4 w-4 mr-2" />
                   QR Code Decoder
+                </Link>
+              </li>
+              <li>
+                <Link href="/email-security" className="text-gray-400 hover:text-white transition-colors flex items-center">
+                  <MailQuestion className="h-4 w-4 mr-2" />
+                  Email Phishing Detector
                 </Link>
               </li>
             </ul>
