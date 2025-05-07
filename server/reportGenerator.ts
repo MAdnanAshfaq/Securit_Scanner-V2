@@ -479,20 +479,31 @@ function addReportFooter(doc: PDFKit.PDFDocument) {
      .fillColor('#6b7280')
      .text(`Report generated on ${timestamp}`, { align: 'center' });
   
-  // Add page numbers to all pages
-  const pageCount = doc.bufferedPageRange().count;
+  // Finalize the document first
+  doc.flushPages();
+  
+  // Get total number of pages
+  const range = doc.bufferedPageRange();
+  const pageCount = range.count;
+
+  // Add page numbers
   for (let i = 0; i < pageCount; i++) {
-    doc.switchToPage(i);
-    
-    // Add page number at the bottom
-    doc.font('Helvetica')
-       .fontSize(10)
-       .fillColor('#6b7280')
-       .text(
-         `Page ${i + 1} of ${pageCount}`,
-         50,
-         doc.page.height - 50,
-         { align: 'center', width: doc.page.width - 100 }
-       );
+    try {
+      doc.switchToPage(i);
+      
+      // Add page number at the bottom with safe margins
+      doc.font('Helvetica')
+         .fontSize(10)
+         .fillColor('#6b7280')
+         .text(
+           `Page ${i + 1} of ${pageCount}`,
+           50,
+           doc.page.height - 70,
+           { align: 'center', width: doc.page.width - 100 }
+         );
+    } catch (err) {
+      console.warn(`Could not add page number to page ${i + 1}`, err);
+      continue;
+    }
   }
 }
