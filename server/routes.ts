@@ -395,7 +395,7 @@ The SecureScan Team
   });
 
   // API endpoint for hash decoding
-  app.post("/api/decode-hash", async (req, res) => {
+  app.all("/api/decode-hash", async (req, res) => {
     try {
       const { hash } = req.body;
       
@@ -425,7 +425,7 @@ The SecureScan Team
   });
   
   // API endpoint for universal decoding (handles any type of encoding/encryption)
-  app.post("/api/universal-decode", async (req, res) => {
+  app.all("/api/universal-decode", async (req, res) => {
     try {
       const { data } = req.body;
       
