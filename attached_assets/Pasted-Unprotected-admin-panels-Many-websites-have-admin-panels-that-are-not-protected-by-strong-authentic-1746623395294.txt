@@ -1,0 +1,19 @@
+Unprotected admin panels: Many websites have admin panels that are not protected by strong authentication and authorization measures. Attackers can easily gain unauthorized access to these panels by guessing common usernames and passwords, or by exploiting vulnerabilities in the authentication process.
+
+SQL injection: SQL injection vulnerabilities allow attackers to modify SQL queries sent to a database by injecting malicious code. This can lead to data theft, unauthorized access to sensitive information, or even complete database compromise.
+
+Cross-site scripting (XSS): XSS vulnerabilities occur when user input is not properly validated or escaped, allowing attackers to inject malicious scripts into web pages. This can lead to session hijacking, data theft, or redirection to malicious websites.
+
+File upload vulnerabilities: Many websites allow users to upload files, but fail to properly validate and sanitize the files. This can lead to arbitrary code execution on the server-side, which can be dangerous if the uploaded files are executable.
+
+Insecure direct object references: Direct object references (IDORs) occur when a web application uses user-supplied input to access objects directly. If not properly validated, attackers can gain unauthorized access to resources belonging to other users.
+
+Weak password policies: Many websites have weak password policies, allowing users to choose commonly used or easily guessable passwords. This makes it easier for attackers to compromise user accounts through brute-force attacks or password guessing.
+
+Insecure communication: Many websites use HTTP instead of HTTPS for sensitive data transmission, which can be intercepted and tampered with by attackers.
+
+Outdated software: Older or unsupported software versions may have known vulnerabilities that can be exploited by attackers.
+
+Insufficient security controls: Many websites have insufficient security controls, such as missing security headers, missing rate limiting, or misconfigured access controls, which can make the website vulnerable to attacks.
+
+Lack of security awareness and training: Many websites have a lack of security awareness and training for their employees, leading to a lack of understanding of common security threats and best practices.
