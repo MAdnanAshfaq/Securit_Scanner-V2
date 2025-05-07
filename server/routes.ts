@@ -210,7 +210,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Name, email, and message are required" });
       }
       
-      // Create email transporter with secure configuration
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ message: "Please provide a valid email address" });
+      }
+      
+      // Check for EMAIL_PASSWORD environment variable
+      if (!process.env.EMAIL_PASSWORD) {
+        log("EMAIL_PASSWORD environment variable not set", "email");
+        return res.status(500).json({ message: "Server email configuration error" });
+      }
+      
+      log(`Sending contact form email from ${email} with subject: ${subject || 'Contact Form'}`, "email");
+      
+      // Create email transporter with secure configuration and proper error handling
       const transporter = nodemailer.createTransport({
         host: "smtp.gmail.com",
         port: 465,
@@ -218,37 +232,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
         auth: {
           user: "adnan.ashfaq@genesisengr.com",
           pass: process.env.EMAIL_PASSWORD
-        }
+        },
+        tls: {
+          rejectUnauthorized: false // Allow self-signed certificates
+        },
+        debug: true, // Enable debug
+        logger: true  // Log to console
       });
       
-      // Set up email data
+      // Set up email data with sender name in the from field
       const mailOptions = {
-        from: email,
+        from: `"${name}" <${email}>`,
         to: "adnan.ashfaq@genesisengr.com",
+        replyTo: email, // Make replies go back to the sender
         subject: subject || `Contact Form Message from ${name}`,
         text: `
 Name: ${name}
 Email: ${email}
 Message:
 ${message}
+
+--
+This message was sent via the Security Scanner contact form.
         `,
         html: `
-<h2>Contact Form Submission</h2>
-<p><strong>Name:</strong> ${name}</p>
-<p><strong>Email:</strong> ${email}</p>
-<p><strong>Message:</strong></p>
-<p>${message.replace(/\n/g, '<br>')}</p>
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 5px;">
+  <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px;">Contact Form Submission</h2>
+  <p><strong>Name:</strong> ${name}</p>
+  <p><strong>Email:</strong> <a href="mailto:${email}">${email}</a></p>
+  <p><strong>Message:</strong></p>
+  <div style="background-color: #f9f9f9; padding: 15px; border-radius: 5px;">
+    <p>${message.replace(/\n/g, '<br>')}</p>
+  </div>
+  <p style="font-size: 12px; color: #777; margin-top: 20px; border-top: 1px solid #eee; padding-top: 10px;">
+    This message was sent via the Security Scanner contact form.
+  </p>
+</div>
         `
       };
       
-      // Send email
-      await transporter.sendMail(mailOptions);
+      // Send email with timeout
+      const sendPromise = transporter.sendMail(mailOptions);
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Email sending timeout after 30 seconds')), 30000);
+      });
       
+      await Promise.race([sendPromise, timeoutPromise]);
+      
+      log("Contact form email sent successfully", "email");
       res.json({ success: true, message: "Contact form submitted successfully" });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      console.error("Contact form error:", errorMessage);
-      res.status(500).json({ message: `Failed to send contact form: ${errorMessage}` });
+      log(`Contact form error: ${errorMessage}`, "email");
+      
+      // Provide a user-friendly error message
+      if (errorMessage.includes("Invalid login") || errorMessage.includes("authentication failed")) {
+        return res.status(500).json({ message: "Email server authentication failed. Please try again later." });
+      } else if (errorMessage.includes("timeout")) {
+        return res.status(500).json({ message: "Email sending timed out. Please try again later." });
+      }
+      
+      res.status(500).json({ message: "Failed to send your message. Please try again later." });
     }
   });
 
@@ -306,7 +350,26 @@ ${message}
       // Validate required fields
       if (!email || !reportUrl) {
         return res.status(400).json({ 
+          success: false,
           message: "Email and report URL are required" 
+        });
+      }
+      
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ 
+          success: false,
+          message: "Please provide a valid email address" 
+        });
+      }
+      
+      // Check for EMAIL_PASSWORD environment variable
+      if (!process.env.EMAIL_PASSWORD) {
+        log("EMAIL_PASSWORD environment variable not set", "email");
+        return res.status(500).json({ 
+          success: false,
+          message: "Server email configuration error" 
         });
       }
       
@@ -317,11 +380,14 @@ ${message}
       // Check if report exists
       if (!fs.existsSync(reportPath)) {
         return res.status(404).json({ 
+          success: false,
           message: "Report file not found" 
         });
       }
       
-      // Create email transporter with secure configuration
+      log(`Sending security report to ${email} for website: ${scanUrl || 'Unknown'}`, "email");
+      
+      // Create email transporter with secure configuration and proper error handling
       const transporter = nodemailer.createTransport({
         host: "smtp.gmail.com",
         port: 465,
@@ -329,12 +395,17 @@ ${message}
         auth: {
           user: "adnan.ashfaq@genesisengr.com",
           pass: process.env.EMAIL_PASSWORD
-        }
+        },
+        tls: {
+          rejectUnauthorized: false // Allow self-signed certificates
+        },
+        debug: true, // Enable debug
+        logger: true  // Log to console
       });
       
-      // Set up email data
+      // Set up email data with professional formatting
       const mailOptions = {
-        from: "adnan.ashfaq@genesisengr.com",
+        from: '"Security Scanner" <adnan.ashfaq@genesisengr.com>',
         to: email,
         subject: `Security Scan Report for ${scanUrl || 'Your Website'}`,
         text: `
@@ -355,19 +426,21 @@ Best regards,
 The SecureScan Team
         `,
         html: `
-<h2>Security Vulnerability Report</h2>
-<p>Dear Security Professional,</p>
-<p>Attached is your comprehensive security vulnerability report for <strong>${scanUrl || 'your website'}</strong>.</p>
-<p>This report contains detailed findings from our security scan, including:</p>
-<ul>
-  <li>Executive summary of vulnerabilities found</li>
-  <li>Detailed technical analysis of each issue</li>
-  <li>Severity ratings and risk assessment</li>
-  <li>Recommendations for remediation</li>
-  <li>Visual charts and statistics</li>
-</ul>
-<p>If you have any questions about this report or need assistance implementing the security recommendations, please contact our team.</p>
-<p>Best regards,<br>The SecureScan Team</p>
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 5px;">
+  <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px;">Security Vulnerability Report</h2>
+  <p>Dear Security Professional,</p>
+  <p>Attached is your comprehensive security vulnerability report for <strong>${scanUrl || 'your website'}</strong>.</p>
+  <p>This report contains detailed findings from our security scan, including:</p>
+  <ul style="margin-bottom: 20px;">
+    <li>Executive summary of vulnerabilities found</li>
+    <li>Detailed technical analysis of each issue</li>
+    <li>Severity ratings and risk assessment</li>
+    <li>Recommendations for remediation</li>
+    <li>Visual charts and statistics</li>
+  </ul>
+  <p>If you have any questions about this report or need assistance implementing the security recommendations, please contact our team.</p>
+  <p style="margin-top: 30px; padding-top: 10px; border-top: 1px solid #eee;">Best regards,<br>The SecureScan Team</p>
+</div>
         `,
         attachments: [
           {
@@ -377,19 +450,39 @@ The SecureScan Team
         ]
       };
       
-      // Send email
-      await transporter.sendMail(mailOptions);
+      // Send email with timeout
+      const sendPromise = transporter.sendMail(mailOptions);
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Email sending timeout after 30 seconds')), 30000);
+      });
       
+      await Promise.race([sendPromise, timeoutPromise]);
+      
+      log("Security report email sent successfully", "email");
       res.json({ 
         success: true, 
         message: "Report has been emailed successfully" 
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      console.error("Email report error:", errorMessage);
+      log(`Email report error: ${errorMessage}`, "email");
+      
+      // Provide a user-friendly error message
+      if (errorMessage.includes("Invalid login") || errorMessage.includes("authentication failed")) {
+        return res.status(500).json({ 
+          success: false,
+          message: "Email server authentication failed. Please try again later." 
+        });
+      } else if (errorMessage.includes("timeout")) {
+        return res.status(500).json({ 
+          success: false,
+          message: "Email sending timed out. Please try again later." 
+        });
+      }
+      
       res.status(500).json({ 
         success: false, 
-        message: `Failed to email report: ${errorMessage}` 
+        message: "Failed to email report. Please try again later." 
       });
     }
   });

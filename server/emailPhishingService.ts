@@ -322,6 +322,7 @@ export class EmailPhishingService {
    * @param folder The folder where the message is located
    */
   async analyzeEmailById(credentialId: string, messageId: number, folder: string = 'INBOX') {
+    let client = null;
     try {
       // Retrieve credentials
       const credentials = await this.getStoredCredentials(credentialId);
@@ -329,20 +330,39 @@ export class EmailPhishingService {
         throw new Error('Credentials not found');
       }
       
-      // Create IMAP client
-      const client = new ImapFlow({
+      // For Gmail, we need to use special settings
+      const isGmail = credentials.email.toLowerCase().includes('gmail.com') || 
+                     credentials.server.toLowerCase().includes('gmail') || 
+                     credentials.server.toLowerCase().includes('google');
+      
+      log(`Connecting to email server for analysis: ${credentials.email} (${credentials.server})`, "phishing");
+      
+      // Create IMAP client with improved settings
+      client = new ImapFlow({
         host: credentials.server,
-        port: parseInt(credentials.port),
+        port: parseInt(credentials.port || '993'),
         secure: credentials.useTLS,
         auth: {
           user: credentials.email,
           pass: this.decryptSensitiveData(credentials.password)
         },
-        logger: false
+        // Special settings for Gmail
+        tls: {
+          rejectUnauthorized: false // Important for some providers including Gmail
+        },
+        logger: false,
+        emitLogs: true,
+        clientInfo: { name: 'SecurityScanner' }
       });
       
-      // Connect to the server
-      await client.connect();
+      // Connect to the server with timeout
+      const connectPromise = client.connect();
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Connection timeout after 15 seconds')), 15000);
+      });
+      
+      await Promise.race([connectPromise, timeoutPromise]);
+      log("Successfully connected to mail server for analysis", "phishing");
       
       // Select and lock the mailbox
       await client.mailboxOpen(folder);
@@ -388,7 +408,12 @@ export class EmailPhishingService {
       });
       
       // Close the connection
-      await client.logout();
+      try {
+        await client.logout();
+      } catch (logoutError) {
+        log(`Error during logout: ${logoutError}`, "phishing");
+        // Continue despite logout error
+      }
       
       return {
         success: true,
@@ -401,9 +426,9 @@ export class EmailPhishingService {
           textContent: parsed.text || '',
           htmlContent: parsed.html || '',
           attachments: parsed.attachments?.map(att => ({
-            filename: att.filename,
-            contentType: att.contentType,
-            size: att.size
+            filename: att.filename || 'unnamed',
+            contentType: att.contentType || 'application/octet-stream',
+            size: att.size || 0
           })) || [],
           headers: parsed.headers
         },
@@ -411,6 +436,16 @@ export class EmailPhishingService {
       };
     } catch (error) {
       log(`Error analyzing email: ${error}`, "phishing");
+      
+      // Ensure connection is closed
+      if (client) {
+        try {
+          await client.logout();
+        } catch (logoutError) {
+          // Ignore logout errors during error handling
+        }
+      }
+      
       throw new Error(`Failed to analyze email: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
