@@ -98,8 +98,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validate the URL
       const { url } = urlSchema.parse(req.body);
 
+      // Validate URL format
+      try {
+        new URL(url);
+      } catch (e) {
+        return res.status(400).json({ message: "Invalid URL format" });
+      }
+
       // Start the scan process
       const scan = await scanWebsite(url);
+      
+      if (!scan) {
+        return res.status(500).json({ message: "Scan failed to complete" });
+      }
 
       res.json(scan);
     } catch (error) {
@@ -107,8 +118,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.status(400).json({ message: error.message });
       } else {
         const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        console.error("Scan error details:", error);
         log("Scan error: " + errorMessage, "scan");
-        res.status(500).json({ message: "Failed to perform scan" });
+        res.status(500).json({ message: `Scan failed: ${errorMessage}` });
       }
     }
   });
