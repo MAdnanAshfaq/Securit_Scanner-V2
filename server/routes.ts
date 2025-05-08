@@ -29,11 +29,18 @@ const __dirname = path.dirname(__filename);
 export async function registerRoutes(app: Express): Promise<Server> {
   // API endpoint to start a scan
 
+  import bcrypt from 'bcryptjs';
+  import jwt from 'jsonwebtoken';
+
   // Authentication routes
   app.post("/api/auth/register", async (req, res) => {
     try {
       const { username, password } = req.body;
       
+      if (!username || !password) {
+        return res.status(400).json({ message: "Username and password are required" });
+      }
+
       // Check if user already exists
       const existingUser = await storage.getUserByUsername(username);
       if (existingUser) {
@@ -41,10 +48,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Create new user
-      const user = await storage.createUser({
+      await storage.createUser({
         username,
-        password: await bcrypt.hash(password, 10),
-        createdAt: new Date()
+        password: await bcrypt.hash(password, 10)
       });
       
       res.json({ message: "User registered successfully" });
@@ -58,6 +64,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { username, password } = req.body;
       
+      if (!username || !password) {
+        return res.status(400).json({ message: "Username and password are required" });
+      }
+
       // Get user
       const user = await storage.getUserByUsername(username);
       if (!user) {
