@@ -1,0 +1,12 @@
+{
+  "id": "aedad4d5-fc36-4642-b840-227a25d48af1",
+  "email": "malikhussainabas863@gmail.com",
+  "password": "6932a93f37d0de7cb54e9324b7c8e23c:da69f14dc963efac85f660ed0d209abb7f75d98e9a7a8c5f16569fa4121bc0af",
+  "provider": "gmail",
+  "server": "imap.gmail.com",
+  "port": "993",
+  "useTLS": true,
+  "autoScan": true,
+  "scanFrequency": "daily",
+  "dateAdded": "2025-05-08T19:52:08.573Z"
+}
