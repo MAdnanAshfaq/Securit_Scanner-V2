@@ -95,14 +95,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/scan", async (req, res) => {
     try {
-      // Validate the URL
-      const { url } = urlSchema.parse(req.body);
+      if (!req.body || typeof req.body !== 'object') {
+        return res.status(400).json({ message: "Invalid request body" });
+      }
 
-      // Validate URL format
-      try {
-        new URL(url);
-      } catch (e) {
-        return res.status(400).json({ message: "Invalid URL format" });
+      const { url } = urlSchema.parse(req.body);
+      
+      if (!url) {
+        return res.status(400).json({ message: "URL is required" });
       }
 
       // Start the scan process

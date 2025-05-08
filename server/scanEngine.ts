@@ -8,12 +8,14 @@ import { performAttack } from "./attackEngine";
 
 // Function to scan a website for vulnerabilities
 export async function scanWebsite(url: string) {
+  if (!url) {
+    throw new Error("URL is required");
+  }
+
   try {
-    // Validate URL before proceeding
-    try {
-      new URL(url);
-    } catch (e) {
-      throw new Error("Invalid URL format");
+    const validUrl = new URL(url);
+    if (!validUrl.protocol.startsWith('http')) {
+      throw new Error("URL must use HTTP or HTTPS protocol");
     }
 
     const normalizedUrl = normalizeUrl(url);
