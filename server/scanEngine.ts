@@ -9,7 +9,15 @@ import { performAttack } from "./attackEngine";
 // Function to scan a website for vulnerabilities
 export async function scanWebsite(url: string) {
   try {
+    // Validate URL before proceeding
+    try {
+      new URL(url);
+    } catch (e) {
+      throw new Error("Invalid URL format");
+    }
+
     const normalizedUrl = normalizeUrl(url);
+    console.log("Starting scan for URL:", normalizedUrl);
     
     // Create scan record
     const scan: InsertScan = {
@@ -46,7 +54,21 @@ export async function scanWebsite(url: string) {
     return updatedScan;
   } catch (error) {
     console.error("Scan error:", error);
-    throw error;
+    // Create failed scan record
+    const failedScan: InsertScan = {
+      url: url,
+      startTime: new Date(),
+      endTime: new Date(),
+      status: "failed",
+      serverInfo: { server: "Unknown", ip: "Unknown", location: "Unknown", technologies: [] },
+      highRiskCount: 0,
+      mediumRiskCount: 0,
+      lowRiskCount: 0,
+      infoCount: 0
+    };
+    
+    await storage.createScan(failedScan);
+    throw new Error(`Scan failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
