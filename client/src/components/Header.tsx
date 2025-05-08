@@ -69,7 +69,7 @@ export default function Header() {
               ))}
             </ul>
             <div className="flex items-center ml-6">
-              {isAuthenticated ? (
+              {auth?.isAuthenticated ? (
                 <Button variant="ghost" onClick={logout} size="sm">
                   <LogOut className="h-4 w-4 mr-2" />
                   Logout
