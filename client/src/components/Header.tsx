@@ -22,6 +22,7 @@ const navLinks = [
 ];
 
 export default function Header() {
+  const { auth, logout } = useAuth();
   const [, setLocation] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
 
