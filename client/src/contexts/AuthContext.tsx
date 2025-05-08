@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 
 interface AuthContextType {
   isAuthenticated: boolean;
-  login: () => void;
+  login: (username: string, password: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -15,21 +15,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check if user has a valid session token
     const token = localStorage.getItem('authToken');
     if (token) {
       setIsAuthenticated(true);
     }
   }, []);
 
-  const login = () => {
-    // Simulate authentication
-    localStorage.setItem('authToken', 'temp-token');
-    setIsAuthenticated(true);
-    toast({
-      title: "Success",
-      description: "You have been logged in successfully",
-    });
+  const login = async (username: string, password: string) => {
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+
+      if (!response.ok) {
+        throw new Error('Invalid credentials');
+      }
+
+      const data = await response.json();
+      localStorage.setItem('authToken', data.token);
+      setIsAuthenticated(true);
+      toast({
+        title: "Success",
+        description: "You have been logged in successfully",
+      });
+    } catch (error) {
+      localStorage.removeItem('authToken');
+      setIsAuthenticated(false);
+      throw error;
+    }
   };
 
   const logout = () => {
