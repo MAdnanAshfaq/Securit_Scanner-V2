@@ -150,16 +150,13 @@ async function getServerInfo(url: string, headers: Record<string, string>): Prom
 }
 
 async function resolveIP(hostname: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const dns = require('dns');
-    dns.resolve4(hostname, (err: any, addresses: string[]) => {
-      if (err) {
-        resolve('Unknown');
-      } else {
-        resolve(addresses[0]);
-      }
-    });
-  });
+  try {
+    const { resolve4 } = await import('dns/promises');
+    const addresses = await resolve4(hostname);
+    return addresses[0];
+  } catch (error) {
+    return 'Unknown';
+  }
 }
 
 async function getIPLocation(ip: string): Promise<string> {
