@@ -8,8 +8,15 @@ import EmailCredentialsForm from "@/components/EmailCredentialsForm";
 import EmailViewer from "@/components/EmailViewer";
 
 export default function EmailSecurity() {
-  const [activeTab, setActiveTab] = useState("analyze");
-  const [credentialId, setCredentialId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState(() => {
+    const hasCredentials = localStorage.getItem('emailCredentialId') && localStorage.getItem('connectedEmail');
+    return hasCredentials ? "gmail" : "analyze"; // Changed default to "analyze"
+  });
+  const [credentialId, setCredentialId] = useState<string | null>(() => {
+    const storedId = localStorage.getItem('emailCredentialId');
+    const storedEmail = localStorage.getItem('connectedEmail');
+    return storedId && storedEmail ? storedId : null;
+  });
   const { toast } = useToast();
 
   return (
@@ -45,8 +52,10 @@ export default function EmailSecurity() {
               Securely connect your Gmail account to analyze your emails for phishing attempts
             </p>
           </div>
-          <EmailCredentialsForm onCredentialsSaved={(id) => {
+          <EmailCredentialsForm onCredentialsSaved={(id, email) => { //Added email parameter
             setCredentialId(id);
+            localStorage.setItem('emailCredentialId', id);
+            localStorage.setItem('connectedEmail', email); // Store email also
             toast({
               title: "Gmail Connected",
               description: "Your Gmail account has been connected successfully",
@@ -74,7 +83,7 @@ export default function EmailSecurity() {
 
       <div className="max-w-3xl mx-auto mt-12 space-y-4 text-center">
         <h2 className="text-2xl font-bold">How It Works</h2>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left mt-6">
           <div className="bg-card rounded-lg p-6 shadow-sm border">
             <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
@@ -86,7 +95,7 @@ export default function EmailSecurity() {
               like spoofed domains, suspicious URLs, and social engineering tactics.
             </p>
           </div>
-          
+
           <div className="bg-card rounded-lg p-6 shadow-sm border">
             <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
               <span className="text-xl font-bold text-primary">2</span>
@@ -97,7 +106,7 @@ export default function EmailSecurity() {
               that traditional scanners might miss, providing detailed insights.
             </p>
           </div>
-          
+
           <div className="bg-card rounded-lg p-6 shadow-sm border">
             <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
               <span className="text-xl font-bold text-primary">3</span>

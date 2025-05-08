@@ -124,6 +124,18 @@ export default function EmailViewer({ credentialId }: EmailViewerProps) {
             description: "Unable to analyze this email. Please try selecting the email again.",
             variant: "destructive"
           });
+          setIsLoading(prev => ({ ...prev, analyzingEmail: false }));
+          return;
+        }
+        if (response.status === 401) {
+          toast({
+            title: "Session Expired",
+            description: "Your email session has expired. Please reconnect your account.",
+            variant: "destructive"
+          });
+          localStorage.removeItem('emailCredentialId');
+          localStorage.removeItem('connectedEmail');
+          window.location.reload();
           return;
         }
         throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
