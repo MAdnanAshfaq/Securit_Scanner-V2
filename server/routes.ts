@@ -30,7 +30,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API endpoint to start a scan
 
   const bcryptjs = await import('bcryptjs');
-  const jwt = await import('jsonwebtoken');
+  const jsonwebtoken = await import('jsonwebtoken');
 
   // Authentication routes
   app.post("/api/auth/register", async (req, res) => {
@@ -81,7 +81,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Generate JWT token
-      const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET || 'default-secret', {
+      const token = jsonwebtoken.default.sign({ userId: user.id }, process.env.JWT_SECRET || 'default-secret', {
         expiresIn: '24h'
       });
       
