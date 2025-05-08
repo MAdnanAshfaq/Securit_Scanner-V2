@@ -56,15 +56,33 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = process.env.PORT || 5000;
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
-  });
+  // ALWAYS serve the app on port 5000 or fallback to another port
+  // this serves both the API and the client
+  const tryPort = async (port: number): Promise<number> => {
+    try {
+      await new Promise((resolve, reject) => {
+        server.listen({
+          port,
+          host: "0.0.0.0",
+          reusePort: true,
+        }, () => resolve(port)).on('error', reject);
+      });
+      return port;
+    } catch (error) {
+      if (port < 5010) { // Try up to port 5010
+        return tryPort(port + 1);
+      }
+      throw error;
+    }
+  };
+
+  const startPort = process.env.PORT ? parseInt(process.env.PORT) : 5000;
+  tryPort(startPort)
+    .then(port => {
+      log(`serving on port ${port}`);
+    })
+    .catch(error => {
+      log(`Failed to start server: ${error}`);
+      process.exit(1);
+    });
 })();
