@@ -29,8 +29,8 @@ const __dirname = path.dirname(__filename);
 export async function registerRoutes(app: Express): Promise<Server> {
   // API endpoint to start a scan
 
-  import bcrypt from 'bcryptjs';
-  import jwt from 'jsonwebtoken';
+  import * as bcryptjs from 'bcryptjs';
+import * as jwt from 'jsonwebtoken';
 
   // Authentication routes
   app.post("/api/auth/register", async (req, res) => {
@@ -50,7 +50,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create new user
       await storage.createUser({
         username,
-        password: await bcrypt.hash(password, 10)
+        password: await bcryptjs.hash(password, 10)
       });
       
       res.json({ message: "User registered successfully" });
@@ -75,7 +75,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Verify password
-      const validPassword = await bcrypt.compare(password, user.password);
+      const validPassword = await bcryptjs.compare(password, user.password);
       if (!validPassword) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
