@@ -115,9 +115,6 @@ export default function EmailViewer({ credentialId }: EmailViewerProps) {
     
     setIsLoading(prev => ({ ...prev, analyzingEmail: true }));
     try {
-      // First refresh emails to ensure we have latest data
-      await fetchEmails();
-      
       const response = await fetch(`/api/analyze-email/${credentialId}/${emailId}?folder=${currentFolder}`);
       
       if (!response.ok) {

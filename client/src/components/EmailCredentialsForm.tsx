@@ -33,8 +33,20 @@ interface EmailCredentialsFormProps {
 
 export default function EmailCredentialsForm({ onCredentialsSaved }: EmailCredentialsFormProps) {
   const [submitting, setSubmitting] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [success, setSuccess] = useState(() => !!localStorage.getItem('emailCredentialId'));
+  const [connectedEmail, setConnectedEmail] = useState(() => localStorage.getItem('connectedEmail'));
   const { toast } = useToast();
+
+  const handleLogout = () => {
+    localStorage.removeItem('emailCredentialId');
+    localStorage.removeItem('connectedEmail');
+    setSuccess(false);
+    setConnectedEmail(null);
+    toast({
+      title: "Logged Out",
+      description: "Email account disconnected successfully"
+    });
+  };
 
   const form = useForm<EmailCredentialsValues>({
     resolver: zodResolver(emailCredentialsSchema),
@@ -77,6 +89,8 @@ export default function EmailCredentialsForm({ onCredentialsSaved }: EmailCreden
       
       // Call the callback if provided
       if (onCredentialsSaved && result.credentialId) {
+        localStorage.setItem('connectedEmail', data.email);
+        setConnectedEmail(data.email);
         onCredentialsSaved(result.credentialId);
       }
     } catch (error) {
@@ -104,19 +118,28 @@ export default function EmailCredentialsForm({ onCredentialsSaved }: EmailCreden
             <div className="text-center py-4 space-y-4">
               <Shield className="w-12 h-12 text-green-500 mx-auto" />
               <h3 className="text-xl font-bold">Email Account Connected</h3>
-              <p>
-                Your email credentials have been securely stored. The system will now scan your inbox for 
-                phishing attempts based on your settings.
+              <p className="text-gray-600">
+                {connectedEmail} is connected and ready for phishing analysis.
               </p>
-              <Button
-                onClick={() => {
-                  setSuccess(false);
-                  form.reset();
-                }}
-                className="mt-4"
-              >
-                Connect Another Account
-              </Button>
+              <div className="flex gap-4 justify-center">
+                <Button
+                  variant="destructive"
+                  onClick={handleLogout}
+                  className="mt-4"
+                >
+                  Disconnect Account
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSuccess(false);
+                    form.reset();
+                  }}
+                  className="mt-4"
+                >
+                  Connect Different Account
+                </Button>
+              </div>
             </div>
           ) : (
             <Form {...form}>
