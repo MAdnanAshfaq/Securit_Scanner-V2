@@ -41,7 +41,7 @@ export default function EmailSecurityPage() {
             </TabsList>
             
             <TabsContent value="manual" className="space-y-4">
-              <PhishingDetector />
+              <PhishingDetector key="persistent-detector" />
             </TabsContent>
             
             <TabsContent value="connect" className="space-y-4">
