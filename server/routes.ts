@@ -777,8 +777,24 @@ The SecureScan Team
         });
       }
 
+      // Validate messageId is a number
+      const messageIdNum = parseInt(messageId);
+      if (isNaN(messageIdNum)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid message ID format"
+        });
+      }
+
       // Analyze the specific email
-      const result = await emailPhishingService.analyzeEmailById(credentialId, parseInt(messageId), folder);
+      const result = await emailPhishingService.analyzeEmailById(credentialId, messageIdNum, folder);
+      
+      if (!result || !result.success) {
+        return res.status(500).json({
+          success: false,
+          message: "Failed to analyze email content"
+        });
+      }
 
       res.json(result);
     } catch (error) {

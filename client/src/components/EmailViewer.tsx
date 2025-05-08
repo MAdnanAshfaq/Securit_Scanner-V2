@@ -116,12 +116,15 @@ export default function EmailViewer({ credentialId }: EmailViewerProps) {
     setIsLoading(prev => ({ ...prev, analyzingEmail: true }));
     try {
       const response = await fetch(`/api/analyze-email/${credentialId}/${emailId}?folder=${currentFolder}`);
+      const contentType = response.headers.get("content-type");
       
       if (!response.ok) {
+        const errorData = contentType?.includes("application/json") ? await response.json() : { message: "Failed to analyze email" };
+        
         if (response.status === 500) {
           toast({
             title: "Analysis Failed",
-            description: "Unable to analyze this email. Please try selecting the email again.",
+            description: errorData.message || "Unable to analyze this email. Please try selecting the email again.",
             variant: "destructive"
           });
           setIsLoading(prev => ({ ...prev, analyzingEmail: false }));
