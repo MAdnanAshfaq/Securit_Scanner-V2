@@ -29,8 +29,8 @@ const __dirname = path.dirname(__filename);
 export async function registerRoutes(app: Express): Promise<Server> {
   // API endpoint to start a scan
 
-  import * as bcryptjs from 'bcryptjs';
-import * as jwt from 'jsonwebtoken';
+  const bcryptjs = await import('bcryptjs');
+  const jwt = await import('jsonwebtoken');
 
   // Authentication routes
   app.post("/api/auth/register", async (req, res) => {
