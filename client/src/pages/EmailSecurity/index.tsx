@@ -10,7 +10,7 @@ import PhishingDetector from "../../components/PhishingDetector";
 
 export default function EmailSecurityPage() {
   const [activeTab, setActiveTab] = useState("manual");
-  const [credentialId, setCredentialId] = useState<string | null>(null);
+  const [credentialId, setCredentialId] = useState<string | null>(() => localStorage.getItem('emailCredentialId'));
   const { toast } = useToast();
 
   return (
@@ -55,6 +55,7 @@ export default function EmailSecurityPage() {
               
               <EmailCredentialsForm onCredentialsSaved={(id) => {
                 setCredentialId(id);
+                localStorage.setItem('emailCredentialId', id);
                 toast({
                   title: "Gmail Connected",
                   description: "Your Gmail account has been connected successfully",
