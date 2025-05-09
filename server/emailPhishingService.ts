@@ -327,7 +327,10 @@ export class EmailPhishingService {
       // Retrieve credentials
       const credentials = await this.getStoredCredentials(credentialId);
       if (!credentials) {
-        throw new Error('Credentials not found');
+        return {
+          success: false,
+          error: "Email credentials not found. Please reconnect your email account."
+        };
       }
       
       // For Gmail, we need to use special settings

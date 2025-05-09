@@ -784,6 +784,14 @@ The SecureScan Team
         });
       }
 
+      // Validate credentialId format
+      if (!credentialId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid credential ID format"
+        });
+      }
+
       // Validate messageId is a number
       const messageIdNum = parseInt(messageId);
       if (isNaN(messageIdNum)) {
