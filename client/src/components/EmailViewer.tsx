@@ -77,23 +77,23 @@ export default function EmailViewer({ credentialId }: EmailViewerProps) {
 
   const fetchEmails = async () => {
     if (!credentialId) return;
-    
+
     setIsLoading(prev => ({ ...prev, fetchingEmails: true }));
     try {
       const response = await fetch(`/api/emails/${credentialId}?folder=${currentFolder}`);
-      
+
       if (!response.ok) {
         throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
       }
-      
+
       const data = await response.json();
-      
+
       if (!data.success) {
         throw new Error(data.message || 'Unknown error occurred');
       }
-      
+
       setEmails(data.emails || []);
-      
+
       toast({
         title: "Emails Retrieved",
         description: `Found ${data.emails.length} emails in ${currentFolder}`,
@@ -112,15 +112,15 @@ export default function EmailViewer({ credentialId }: EmailViewerProps) {
 
   const analyzeEmail = async (emailId: number) => {
     if (!credentialId) return;
-    
+
     setIsLoading(prev => ({ ...prev, analyzingEmail: true }));
     try {
       const response = await fetch(`/api/analyze-email/${credentialId}/${emailId}?folder=${currentFolder}`);
       const contentType = response.headers.get("content-type");
-      
+
       if (!response.ok) {
         const errorData = contentType?.includes("application/json") ? await response.json() : { message: "Failed to analyze email" };
-        
+
         if (response.status === 500) {
           toast({
             title: "Analysis Failed",
@@ -143,20 +143,20 @@ export default function EmailViewer({ credentialId }: EmailViewerProps) {
         }
         throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
       }
-      
+
       const data = await response.json();
-      
+
       if (!data.success) {
         throw new Error(data.error || data.message || 'Unknown error occurred');
       }
-      
+
       if (!data.email || !data.analysis) {
         throw new Error('Invalid response format from server');
       }
-      
+
       setSelectedEmail(data.email);
       setEmailAnalysis(data.analysis);
-      
+
       toast({
         title: "Email Analysis Complete",
         description: data.analysis.isPhishing 
@@ -178,7 +178,7 @@ export default function EmailViewer({ credentialId }: EmailViewerProps) {
 
   const renderEmailContent = () => {
     if (!selectedEmail) return null;
-    
+
     return (
       <div className="space-y-4">
         <div className="flex justify-between items-start">
@@ -190,7 +190,7 @@ export default function EmailViewer({ credentialId }: EmailViewerProps) {
               <div><span className="font-semibold">Date:</span> {new Date(selectedEmail.date).toLocaleString()}</div>
             </div>
           </div>
-          
+
           <Button 
             variant="outline" 
             size="sm" 
@@ -210,16 +210,16 @@ export default function EmailViewer({ credentialId }: EmailViewerProps) {
             )}
           </Button>
         </div>
-        
+
         <Separator />
-        
+
         <Tabs defaultValue="formatted">
           <TabsList>
             <TabsTrigger value="formatted">Formatted View</TabsTrigger>
             <TabsTrigger value="text">Text View</TabsTrigger>
             <TabsTrigger value="html">HTML View</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="formatted" className="pt-4">
             {selectedEmail.htmlContent ? (
               <div 
@@ -233,7 +233,7 @@ export default function EmailViewer({ credentialId }: EmailViewerProps) {
               </div>
             )}
           </TabsContent>
-          
+
           <TabsContent value="text" className="pt-4">
             <div 
               className="font-mono text-sm whitespace-pre-wrap p-4 border rounded-md bg-gray-50"
@@ -242,7 +242,7 @@ export default function EmailViewer({ credentialId }: EmailViewerProps) {
               {selectedEmail.textContent || 'No text content available'}
             </div>
           </TabsContent>
-          
+
           <TabsContent value="html" className="pt-4">
             <div 
               className="font-mono text-sm whitespace-pre-wrap p-4 border rounded-md bg-gray-50"
@@ -252,7 +252,7 @@ export default function EmailViewer({ credentialId }: EmailViewerProps) {
             </div>
           </TabsContent>
         </Tabs>
-        
+
         {selectedEmail.attachments.length > 0 && (
           <>
             <Separator />
@@ -275,17 +275,17 @@ export default function EmailViewer({ credentialId }: EmailViewerProps) {
 
   const renderAnalysis = () => {
     if (!emailAnalysis) return null;
-    
+
     const riskColor = emailAnalysis.riskScore >= 7 
       ? 'bg-red-100 border-red-400 text-red-800' 
       : emailAnalysis.riskScore >= 4 
         ? 'bg-yellow-100 border-yellow-400 text-yellow-800' 
         : 'bg-green-100 border-green-400 text-green-800';
-    
+
     return (
       <div className="space-y-4 mt-6">
         <h3 className="text-lg font-semibold">Phishing Analysis Results</h3>
-        
+
         <Alert className={riskColor}>
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>
@@ -297,19 +297,19 @@ export default function EmailViewer({ credentialId }: EmailViewerProps) {
             Risk Score: {emailAnalysis.riskScore}/10
           </AlertDescription>
         </Alert>
-        
+
         <div className="bg-gray-50 p-4 rounded-md border">
           <h4 className="font-semibold mb-2">Summary</h4>
           <p className="text-sm text-gray-700">{emailAnalysis.summary}</p>
         </div>
-        
+
         <Tabs defaultValue="redflags">
           <TabsList className="grid grid-cols-3">
             <TabsTrigger value="redflags">Red Flags</TabsTrigger>
             <TabsTrigger value="sender">Sender Analysis</TabsTrigger>
             <TabsTrigger value="recommendations">Recommendations</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="redflags" className="pt-4">
             {emailAnalysis.contentAnalysis.redFlags.length > 0 ? (
               <div className="space-y-2">
@@ -325,7 +325,7 @@ export default function EmailViewer({ credentialId }: EmailViewerProps) {
                 <div className="text-sm text-green-700">No suspicious content patterns were detected.</div>
               </div>
             )}
-            
+
             {emailAnalysis.urlAnalysis.suspiciousUrls.length > 0 && (
               <div className="mt-4">
                 <h4 className="font-semibold mb-2">Suspicious URLs:</h4>
@@ -340,12 +340,12 @@ export default function EmailViewer({ credentialId }: EmailViewerProps) {
               </div>
             )}
           </TabsContent>
-          
+
           <TabsContent value="sender" className="pt-4">
             <div className={emailAnalysis.senderAnalysis.suspicious ? 'bg-red-50 p-3 rounded-md border border-red-200' : 'bg-green-50 p-3 rounded-md border border-green-200'}>
               <div className="font-semibold">{emailAnalysis.senderAnalysis.suspicious ? 'Suspicious Sender' : 'Legitimate Sender'}</div>
               <div className="text-sm mt-1">{emailAnalysis.senderAnalysis.details}</div>
-              
+
               {emailAnalysis.senderAnalysis.domainInfo && (
                 <div className="mt-3 bg-white p-2 rounded-md">
                   <div className="text-xs font-semibold">Domain Information:</div>
@@ -363,7 +363,7 @@ export default function EmailViewer({ credentialId }: EmailViewerProps) {
               )}
             </div>
           </TabsContent>
-          
+
           <TabsContent value="recommendations" className="pt-4">
             <div className="space-y-2">
               {emailAnalysis.recommendations.map((rec, index) => (
@@ -374,7 +374,7 @@ export default function EmailViewer({ credentialId }: EmailViewerProps) {
             </div>
           </TabsContent>
         </Tabs>
-        
+
         {emailAnalysis.aiAnalysis && (
           <div className="mt-4 p-4 rounded-md border bg-purple-50">
             <h4 className="font-semibold mb-2">AI Enhanced Analysis</h4>
