@@ -147,7 +147,11 @@ export default function EmailViewer({ credentialId }: EmailViewerProps) {
       const data = await response.json();
       
       if (!data.success) {
-        throw new Error(data.message || 'Unknown error occurred');
+        throw new Error(data.error || data.message || 'Unknown error occurred');
+      }
+      
+      if (!data.email || !data.analysis) {
+        throw new Error('Invalid response format from server');
       }
       
       setSelectedEmail(data.email);

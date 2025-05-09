@@ -772,7 +772,7 @@ The SecureScan Team
   });
 
   // API endpoint to analyze a specific email
-  app.get("/api/analyze-email/:credentialId/:messageId", async (req, res) => {
+  app.get('/api/analyze-email/:credentialId/:messageId', async (req, res) => {
     try {
       const { credentialId, messageId } = req.params;
       const folder = req.query.folder as string || 'INBOX';
@@ -780,25 +780,14 @@ The SecureScan Team
       if (!credentialId || !messageId) {
         return res.status(400).json({ 
           success: false, 
-          message: "Credential ID and message ID are required" 
+          error: 'Missing required parameters' 
         });
       }
 
-      const messageIdNum = parseInt(messageId);
-      if (isNaN(messageIdNum)) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid message ID format"
-        });
-      }
+      const result = await emailPhishingService.analyzeEmailById(credentialId, parseInt(messageId), folder);
 
-      const result = await emailPhishingService.analyzeEmailById(credentialId, messageIdNum, folder);
-      
-      if (!result) {
-        return res.status(404).json({
-          success: false,
-          message: "Failed to analyze email. Please try again."
-        });
+      if (!result.success) {
+        return res.status(400).json(result);
       }
 
       res.json(result);
