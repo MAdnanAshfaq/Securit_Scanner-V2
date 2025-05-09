@@ -607,11 +607,25 @@ export class EmailPhishingService {
   private analyzeContent(subject: string, content: string) {
     const redFlags = [];
     
-    // Check for urgency language
+    // Enhanced phishing detection patterns
     const urgencyPhrases = [
       "urgent", "immediate action", "account suspended", "security alert", 
       "unauthorized access", "verify your account", "suspicious activity",
-      "limited time", "expires today", "action required"
+      "limited time", "expires today", "action required", "account locked",
+      "suspicious login", "unusual activity", "confirm identity"
+    ];
+
+    const sensitiveInfoRequests = [
+      "password", "credit card", "ssn", "social security",
+      "bank account", "update payment", "verify credentials",
+      "confirm account details", "authentication required"
+    ];
+
+    const suspiciousGrammar = [
+      "kindly provide", "verify you account", "dear costumer",
+      "your account will expired", "we detected suspicious",
+      "click the link below to verify", "will be terminate",
+      "security purpose", "to avoid suspension"
     ];
     
     for (const phrase of urgencyPhrases) {
@@ -684,7 +698,7 @@ export class EmailPhishingService {
   /**
    * Analyze URLs in the email content for suspicious characteristics
    */
-  private analyzeURLs(content: string, suspiciousUrls: string[]) {
+  private async analyzeURLs(content: string, suspiciousUrls: string[]) {
     // Extract URLs from content
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     const extractedUrls = content.match(urlRegex) || [];
@@ -692,6 +706,35 @@ export class EmailPhishingService {
     // Combine with provided suspicious URLs and remove duplicates
     const combinedUrlsList = [...extractedUrls, ...suspiciousUrls].filter(Boolean);
     const allUrls = combinedUrlsList.filter((url, index) => combinedUrlsList.indexOf(url) === index);
+
+    // Check for URL shorteners and IP-based URLs
+    const urlShortenerServices = [
+      'bit.ly', 'tinyurl.com', 'goo.gl', 't.co', 'ow.ly',
+      'is.gd', 'buff.ly', 'rebrand.ly', 'cutt.ly', 'tiny.cc'
+    ];
+
+    // Enhanced security checks for URLs
+    const securityChecks = {
+      hasIPAddress: (url: string) => /\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/.test(url),
+      isUrlShortener: (url: string) => urlShortenerServices.some(service => url.includes(service)),
+      hasUnusualPort: (url: string) => {
+        try {
+          const parsedUrl = new URL(url);
+          return parsedUrl.port && ![80, 443, ""].includes(parsedUrl.port);
+        } catch {
+          return false;
+        }
+      },
+      hasExecutableExtension: (url: string) => /\.(exe|bat|cmd|sh|msi|vbs|ps1)(\?|$)/.test(url),
+      hasExcessiveSubdomains: (url: string) => {
+        try {
+          const hostname = new URL(url).hostname;
+          return hostname.split('.').length > 3;
+        } catch {
+          return false;
+        }
+      }
+    };
     
     // Analyze each URL
     const analyzedUrls = allUrls.map(url => {
@@ -764,9 +807,19 @@ export class EmailPhishingService {
   private calculateRiskScore(senderAnalysis: any, contentAnalysis: any, urlAnalysis: any) {
     let score = 0;
     
-    // Sender factors (0-4 points)
+    // Enhanced sender analysis (0-4 points)
     if (senderAnalysis.suspicious) {
       score += 2;
+      
+      // Check for lookalike domain
+      if (senderAnalysis.details?.includes('lookalike domain')) {
+        score += 1.5;
+      }
+      
+      // Check for recently registered domain
+      if (senderAnalysis.domainInfo?.age && parseInt(senderAnalysis.domainInfo.age) < 30) {
+        score += 1;
+      }
       
       // Additional points for specific issues
       if (senderAnalysis.domainInfo) {
