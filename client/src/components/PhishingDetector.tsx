@@ -263,27 +263,41 @@ export default function PhishingDetector() {
       const response = await fetch("/api/analyze-phishing", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "Accept": "application/json"
         },
         body: JSON.stringify({
-          ...data,
+          subject: data.subject || "",
+          content: data.content || "",
+          sender: data.sender || "",
+          recipient: data.recipient || "",
           suspiciousUrls: suspiciousUrlsArray
         })
       });
 
       if (!response.ok) {
-        throw new Error("Failed to analyze email");
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to analyze email");
       }
 
       const analysis = await response.json();
+      
+      if (!analysis) {
+        throw new Error("No analysis results received");
+      }
+
       setResult(analysis);
-
-      // Reset to the first remediation step
       setCurrentStep(0);
-
-      // Switch to analysis tab
       setActiveTab("analysis");
+      
+      toast({
+        title: "Analysis Complete",
+        description: analysis.isPhishing ? "Phishing indicators detected!" : "Email appears legitimate",
+        variant: analysis.isPhishing ? "destructive" : "default"
+      });
+
     } catch (error) {
+      console.error("Analysis error:", error);
       toast({
         variant: "destructive",
         title: "Analysis Failed",
