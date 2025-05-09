@@ -100,14 +100,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { url } = urlSchema.parse(req.body);
-      
+
       if (!url) {
         return res.status(400).json({ message: "URL is required" });
       }
 
       // Start the scan process
       const scan = await scanWebsite(url);
-      
+
       if (!scan) {
         return res.status(500).json({ message: "Scan failed to complete" });
       }
@@ -671,6 +671,13 @@ The SecureScan Team
         suspiciousUrls: suspiciousUrls || []
       });
 
+      if (!analysis) {
+        return res.status(500).json({
+          success: false,
+          message: "Failed to analyze email: No analysis results"
+        });
+      }
+
       res.json(analysis);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
@@ -788,14 +795,14 @@ The SecureScan Team
 
       // Analyze the specific email
       const result = await emailPhishingService.analyzeEmailById(credentialId, messageIdNum, folder);
-      
+
       if (!result) {
         return res.status(404).json({
           success: false,
           message: "Email not found. Please make sure the email exists and try again."
         });
       }
-      
+
       if (!result.success) {
         return res.status(500).json({
           success: false,
