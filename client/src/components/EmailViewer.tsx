@@ -111,7 +111,23 @@ export default function EmailViewer({ credentialId }: EmailViewerProps) {
   };
 
   const analyzeEmail = async (emailId: number) => {
-    if (!credentialId) return;
+    if (!credentialId) {
+      toast({
+        title: "Error",
+        description: "No email account connected. Please connect your email account first.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!selectedEmail) {
+      toast({
+        title: "Error",
+        description: "Please select an email to analyze first.",
+        variant: "destructive"
+      });
+      return;
+    }
 
     setIsLoading(prev => ({ ...prev, analyzingEmail: true }));
     try {
@@ -121,6 +137,15 @@ export default function EmailViewer({ credentialId }: EmailViewerProps) {
       if (!response.ok) {
         const errorData = contentType?.includes("application/json") ? await response.json() : { message: "Failed to analyze email" };
 
+        if (response.status === 404) {
+          toast({
+            title: "Analysis Failed",
+            description: "Email not found. Please try selecting the email again.",
+            variant: "destructive"
+          });
+          setIsLoading(prev => ({ ...prev, analyzingEmail: false }));
+          return;
+        }
         if (response.status === 500) {
           toast({
             title: "Analysis Failed",
