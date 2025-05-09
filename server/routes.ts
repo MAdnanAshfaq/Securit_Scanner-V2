@@ -796,17 +796,10 @@ The SecureScan Team
       // Analyze the specific email
       const result = await emailPhishingService.analyzeEmailById(credentialId, messageIdNum, folder);
 
-      if (!result) {
+      if (!result || !result.success) {
         return res.status(404).json({
           success: false,
-          message: "Email not found. Please make sure the email exists and try again."
-        });
-      }
-
-      if (!result.success) {
-        return res.status(500).json({
-          success: false,
-          message: "Failed to analyze email content. Please try again."
+          message: result?.error || "Failed to analyze email. Please try again."
         });
       }
 

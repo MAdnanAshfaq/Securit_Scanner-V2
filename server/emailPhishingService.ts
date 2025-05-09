@@ -368,10 +368,22 @@ export class EmailPhishingService {
       await client.mailboxOpen(folder);
       
       // Fetch the specific message
-      const message = await client.fetchOne(messageId, { envelope: true, bodyStructure: true, source: true });
-      if (!message) {
+      let message;
+      try {
+        message = await client.fetchOne(messageId, { envelope: true, bodyStructure: true, source: true });
+        if (!message) {
+          await client.logout();
+          return {
+            success: false,
+            error: "Email not found. Please make sure the email exists and try again."
+          };
+        }
+      } catch (fetchError) {
         await client.logout();
-        throw new Error('Email not found');
+        return {
+          success: false,
+          error: "Failed to fetch email. The message may have been moved or deleted."
+        };
       }
       
       // Parse the raw email source
