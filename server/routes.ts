@@ -801,8 +801,22 @@ The SecureScan Team
         });
       }
 
-      // Analyze the specific email
-      const result = await emailPhishingService.analyzeEmailById(credentialId, messageIdNum, folder);
+      try {
+        // Analyze the specific email
+        const result = await emailPhishingService.analyzeEmailById(credentialId, messageIdNum, folder);
+        
+        if (!result.success) {
+          return res.status(400).json(result);
+        }
+        
+        return res.json(result);
+      } catch (error) {
+        console.error("Email analysis error:", error);
+        return res.status(500).json({ 
+          success: false, 
+          error: error instanceof Error ? error.message : "Failed to analyze email"
+        });
+      }
 
       if (!result || !result.success) {
         return res.status(404).json({
