@@ -110,7 +110,7 @@ export default function EmailViewer({ credentialId }: EmailViewerProps) {
     }
   };
 
-  const analyzeEmail = async (emailId: number) => {
+  const analyzeEmail = async (emailId: number, folder: string) => {
     if (!credentialId) {
       toast({
         title: "Error",
@@ -120,18 +120,9 @@ export default function EmailViewer({ credentialId }: EmailViewerProps) {
       return;
     }
 
-    if (!selectedEmail) {
-      toast({
-        title: "Error",
-        description: "Please select an email to analyze first.",
-        variant: "destructive"
-      });
-      return;
-    }
-
     setIsLoading(prev => ({ ...prev, analyzingEmail: true }));
     try {
-      const response = await fetch(`/api/analyze-email/${credentialId}/${emailId}?folder=${currentFolder}`);
+      const response = await fetch(`/api/analyze-email/${credentialId}/${emailId}?folder=${folder}`);
       const contentType = response.headers.get("content-type");
 
       if (!response.ok) {
@@ -201,6 +192,54 @@ export default function EmailViewer({ credentialId }: EmailViewerProps) {
     }
   };
 
+  const analyzeAllEmails = async () => {
+    if (!credentialId) {
+      toast({
+        title: "Error",
+        description: "No email account connected. Please connect your email account first.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!emails || emails.length === 0) {
+      toast({
+        title: "Info",
+        description: "No emails to analyze.",
+        variant: "info"
+      });
+      return;
+    }
+
+    setIsLoading(prev => ({ ...prev, analyzingEmail: true }));
+    try {
+      // Iterate over each email and analyze it
+      for (const email of emails) {
+        try {
+          // Await the analysis of each email to ensure they are processed sequentially
+          await analyzeEmail(email.id, currentFolder);
+        } catch (analysisError) {
+          console.error(`Error analyzing email ${email.id}:`, analysisError);
+          toast({
+            title: "Analysis Failed",
+            description: `Failed to analyze email ${email.subject}. See console for details.`,
+            variant: "destructive"
+          });
+          // Continue to the next email even if one fails
+        }
+      }
+
+      toast({
+        title: "Batch Analysis Complete",
+        description: "All emails have been analyzed.",
+        variant: "success"
+      });
+
+    } finally {
+      setIsLoading(prev => ({ ...prev, analyzingEmail: false }));
+    }
+  };
+
   const renderEmailContent = () => {
     if (!selectedEmail) return null;
 
@@ -216,24 +255,35 @@ export default function EmailViewer({ credentialId }: EmailViewerProps) {
             </div>
           </div>
 
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => analyzeEmail(selectedEmail.id)}
-            disabled={isLoading.analyzingEmail}
-          >
-            {isLoading.analyzingEmail ? (
-              <>
-                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                Analyzing...
-              </>
-            ) : (
-              <>
-                <Shield className="h-4 w-4 mr-2" />
-                Analyze for Phishing
-              </>
-            )}
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => analyzeEmail(selectedEmail.id, currentFolder)}
+              disabled={isLoading.analyzingEmail}
+            >
+              {isLoading.analyzingEmail ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Analyzing...
+                </>
+              ) : (
+                <>
+                  <Shield className="h-4 w-4 mr-2" />
+                  Analyze Email
+                </>
+              )}
+            </Button>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => analyzeAllEmails()}
+              disabled={isLoading.analyzingEmail || emails.length === 0}
+            >
+              <Shield className="h-4 w-4 mr-2" />
+              Analyze All Emails
+            </Button>
+          </div>
         </div>
 
         <Separator />
