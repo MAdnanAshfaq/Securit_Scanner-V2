@@ -120,6 +120,17 @@ export default function EmailViewer({ credentialId }: EmailViewerProps) {
       return;
     }
 
+    // Get the index of the email in the list (1-based)
+    const emailIndex = emails.findIndex(e => e.id === emailId) + 1;
+    if (emailIndex === 0) {
+      toast({
+        title: "Error",
+        description: "Email not found in the current list.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsLoading(prev => ({ ...prev, analyzingEmail: true }));
     try {
       const response = await fetch(`/api/analyze-email/${credentialId}/${emailId}?folder=${folder}`);
@@ -223,7 +234,7 @@ export default function EmailViewer({ credentialId }: EmailViewerProps) {
         
         // Process batch in parallel
         const results = await Promise.allSettled(
-          batch.map(email => analyzeEmail(email.id, currentFolder))
+          batch.map((email, idx) => analyzeEmail(idx + 1, currentFolder))
         );
         
         // Count successes and failures

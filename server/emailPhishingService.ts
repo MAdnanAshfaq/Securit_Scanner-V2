@@ -370,10 +370,22 @@ export class EmailPhishingService {
       // Select and lock the mailbox
       await client.mailboxOpen(folder);
       
-      // Fetch the specific message
+      // Fetch the specific message using sequence number instead of UID
       let message;
       try {
-        message = await client.fetchOne(messageId, { envelope: true, bodyStructure: true, source: true });
+        const messages = await client.fetch(`${messageId}`, { envelope: true, bodyStructure: true, source: true });
+        if (!messages) {
+          await client.logout();
+          return {
+            success: false,
+            error: "Email not found. Please make sure the email exists and try again."
+          };
+        }
+        // Get the first message from the fetch results
+        for await (const msg of messages) {
+          message = msg;
+          break;
+        }
         if (!message) {
           await client.logout();
           return {
