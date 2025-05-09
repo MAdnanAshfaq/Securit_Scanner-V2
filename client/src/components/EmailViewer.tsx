@@ -212,29 +212,52 @@ export default function EmailViewer({ credentialId }: EmailViewerProps) {
     }
 
     setIsLoading(prev => ({ ...prev, analyzingEmail: true }));
+    let successCount = 0;
+    let failureCount = 0;
+
     try {
-      // Iterate over each email and analyze it
-      for (const email of emails) {
-        try {
-          // Await the analysis of each email to ensure they are processed sequentially
-          await analyzeEmail(email.id, currentFolder);
-        } catch (analysisError) {
-          console.error(`Error analyzing email ${email.id}:`, analysisError);
-          toast({
-            title: "Analysis Failed",
-            description: `Failed to analyze email ${email.subject}. See console for details.`,
-            variant: "destructive"
-          });
-          // Continue to the next email even if one fails
-        }
+      // Process emails in smaller batches to avoid overwhelming the server
+      const batchSize = 5;
+      for (let i = 0; i < emails.length; i += batchSize) {
+        const batch = emails.slice(i, i + batchSize);
+        
+        // Process batch in parallel
+        const results = await Promise.allSettled(
+          batch.map(email => analyzeEmail(email.id, currentFolder))
+        );
+        
+        // Count successes and failures
+        results.forEach((result, index) => {
+          if (result.status === 'fulfilled') {
+            successCount++;
+          } else {
+            failureCount++;
+            console.error(`Failed to analyze email: ${batch[index].subject}`);
+          }
+        });
+
+        // Show progress
+        toast({
+          title: "Batch Progress",
+          description: `Analyzed ${i + batch.length} of ${emails.length} emails`,
+          variant: "default"
+        });
       }
 
+      // Show final results
       toast({
         title: "Batch Analysis Complete",
-        description: "All emails have been analyzed.",
-        variant: "success"
+        description: `Successfully analyzed ${successCount} emails. ${failureCount} failed.`,
+        variant: successCount > 0 ? "success" : "destructive"
       });
 
+    } catch (error) {
+      console.error("Batch analysis error:", error);
+      toast({
+        title: "Analysis Error",
+        description: "Failed to complete batch analysis. Please try again.",
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(prev => ({ ...prev, analyzingEmail: false }));
     }
