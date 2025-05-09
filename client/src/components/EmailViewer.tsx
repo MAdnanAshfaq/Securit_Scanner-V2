@@ -110,7 +110,7 @@ export default function EmailViewer({ credentialId }: EmailViewerProps) {
     }
   };
 
-  const analyzeEmail = async (emailId: number, folder: string) => {
+  const analyzeEmail = async (emailId: number, folder: string = 'INBOX') => {
     if (!credentialId) {
       toast({
         title: "Error",
@@ -120,9 +120,18 @@ export default function EmailViewer({ credentialId }: EmailViewerProps) {
       return;
     }
 
-    // Get the index of the email in the list (1-based)
-    const emailIndex = emails.findIndex(e => e.id === emailId) + 1;
-    if (emailIndex === 0) {
+    if (!emails || emails.length === 0) {
+      toast({
+        title: "Error",
+        description: "No emails available to analyze.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Find the email by ID in our list
+    const emailToAnalyze = emails.find(e => e.id === emailId);
+    if (!emailToAnalyze) {
       toast({
         title: "Error",
         description: "Email not found in the current list.",
@@ -133,42 +142,12 @@ export default function EmailViewer({ credentialId }: EmailViewerProps) {
 
     setIsLoading(prev => ({ ...prev, analyzingEmail: true }));
     try {
-      const response = await fetch(`/api/analyze-email/${credentialId}/${emailId}?folder=${folder}`);
+      const response = await fetch(`/api/analyze-email/${credentialId}/${emailToAnalyze.id}?folder=${folder}`);
       const contentType = response.headers.get("content-type");
 
       if (!response.ok) {
         const errorData = contentType?.includes("application/json") ? await response.json() : { message: "Failed to analyze email" };
-
-        if (response.status === 404) {
-          toast({
-            title: "Analysis Failed",
-            description: "Email not found. Please try selecting the email again.",
-            variant: "destructive"
-          });
-          setIsLoading(prev => ({ ...prev, analyzingEmail: false }));
-          return;
-        }
-        if (response.status === 500) {
-          toast({
-            title: "Analysis Failed",
-            description: errorData.message || "Unable to analyze this email. Please try selecting the email again.",
-            variant: "destructive"
-          });
-          setIsLoading(prev => ({ ...prev, analyzingEmail: false }));
-          return;
-        }
-        if (response.status === 401) {
-          toast({
-            title: "Session Expired",
-            description: "Your email session has expired. Please reconnect your account.",
-            variant: "destructive"
-          });
-          localStorage.removeItem('emailCredentialId');
-          localStorage.removeItem('connectedEmail');
-          window.location.reload();
-          return;
-        }
-        throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
+        throw new Error(errorData.message || `Failed to analyze email: ${response.statusText}`);
       }
 
       const data = await response.json();
@@ -191,6 +170,8 @@ export default function EmailViewer({ credentialId }: EmailViewerProps) {
           : "✓ This email appears to be legitimate.",
         variant: data.analysis.isPhishing ? "destructive" : "default"
       });
+
+      return { success: true, analysis: data.analysis };
     } catch (error) {
       console.error('Error analyzing email:', error);
       toast({
@@ -198,6 +179,7 @@ export default function EmailViewer({ credentialId }: EmailViewerProps) {
         description: error instanceof Error ? error.message : "Unknown error occurred",
         variant: "destructive"
       });
+      return { success: false, error };
     } finally {
       setIsLoading(prev => ({ ...prev, analyzingEmail: false }));
     }
@@ -231,12 +213,12 @@ export default function EmailViewer({ credentialId }: EmailViewerProps) {
       const batchSize = 5;
       for (let i = 0; i < emails.length; i += batchSize) {
         const batch = emails.slice(i, i + batchSize);
-        
+
         // Process batch in parallel
         const results = await Promise.allSettled(
-          batch.map((email, idx) => analyzeEmail(idx + 1, currentFolder))
+          batch.map(email => analyzeEmail(email.id, currentFolder))
         );
-        
+
         // Count successes and failures
         results.forEach((result, index) => {
           if (result.status === 'fulfilled') {
