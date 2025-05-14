@@ -1071,8 +1071,12 @@ async function performBruteForce(
       const startTime = Date.now();
       
       const formData: Record<string, string> = {};
-      formData[usernameField] = username;
-      formData[passwordField] = password;
+      if (usernameField) {
+        formData[usernameField] = username;
+      }
+      if (passwordField) {
+        formData[passwordField] = password;
+      }
       
       // Get any cookies from the login page
       const cookieHeader: Record<string, string> = {};
