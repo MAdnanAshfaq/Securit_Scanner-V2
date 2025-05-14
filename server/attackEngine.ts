@@ -1047,11 +1047,11 @@ async function performBruteForce(
     const usernameFieldMatch = initialResponse.body.match(usernameFieldPattern);
     const passwordFieldMatch = initialResponse.body.match(passwordFieldPattern);
     
-    const usernameField = usernameFieldMatch ? 
+    const usernameField = usernameFieldMatch && usernameFieldMatch.index !== undefined ? 
       initialResponse.body.substring(usernameFieldMatch.index, usernameFieldMatch.index + 50).match(/name=["']?([^"'\s>]+)["']?/i)?.[1] :
       'username';
       
-    const passwordField = passwordFieldMatch ? 
+    const passwordField = passwordFieldMatch && passwordFieldMatch.index !== undefined ? 
       initialResponse.body.substring(passwordFieldMatch.index, passwordFieldMatch.index + 50).match(/name=["']?([^"'\s>]+)["']?/i)?.[1] :
       'password';
     
@@ -1070,10 +1070,9 @@ async function performBruteForce(
     for (const password of selectedPasswords) {
       const startTime = Date.now();
       
-      const formData: Record<string, string> = {
-        [usernameField]: username,
-        [passwordField]: password
-      };
+      const formData: Record<string, string> = {};
+      formData[usernameField] = username;
+      formData[passwordField] = password;
       
       // Get any cookies from the login page
       const cookieHeader: Record<string, string> = {};

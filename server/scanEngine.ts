@@ -79,13 +79,21 @@ async function performSecurityTests(url: string) {
   const serverInfo = await getServerInfo(url, headers);
   const vulnerabilities: InsertVulnerability[] = [];
 
+  // Create a scan record first to get the scanId
+  const scan = await storage.createScan({
+    url,
+    status: 'in-progress',
+    startTime: new Date()
+  });
+
   // Real SQL Injection Testing
   const sqlResults = await performAttack("sql-injection", url, "GET", "search", "' OR '1'='1");
   if (sqlResults.success && sqlResults.details?.potentiallyVulnerable) {
     vulnerabilities.push({
       name: "SQL Injection Vulnerability",
+      scanId: scan.id,
       description: sqlResults.results,
-      severity: RiskLevel.HIGH,
+      severity: RiskLevel.HIGH.toString(),
       location: url,
       details: JSON.stringify(sqlResults.details),
       recommendation: "Implement prepared statements and input validation",
@@ -98,8 +106,9 @@ async function performSecurityTests(url: string) {
   if (xssResults.success && xssResults.details?.isReflected) {
     vulnerabilities.push({
       name: "Cross-Site Scripting (XSS)",
+      scanId: scan.id,
       description: xssResults.results,
-      severity: RiskLevel.HIGH,
+      severity: RiskLevel.HIGH.toString(),
       location: url,
       details: JSON.stringify(xssResults.details),
       recommendation: "Implement proper output encoding",
@@ -112,8 +121,9 @@ async function performSecurityTests(url: string) {
   if (ssrfResults.success && ssrfResults.details?.potentiallyVulnerable) {
     vulnerabilities.push({
       name: "Server-Side Request Forgery",
+      scanId: scan.id,
       description: ssrfResults.results,
-      severity: RiskLevel.HIGH,
+      severity: RiskLevel.HIGH.toString(),
       location: url,
       details: JSON.stringify(ssrfResults.details),
       recommendation: "Validate and sanitize URL inputs",
@@ -123,11 +133,19 @@ async function performSecurityTests(url: string) {
 
   // Security Headers Analysis
   const headerVulnerabilities = await analyzeSecurityHeaders(headers, parsedUrl);
-  vulnerabilities.push(...headerVulnerabilities);
+  vulnerabilities.push(...headerVulnerabilities.map(v => ({
+    ...v,
+    scanId: scan.id,
+    severity: v.severity.toString()
+  })));
 
   // SSL/TLS Analysis
   const sslVulnerabilities = await analyzeSSLConfiguration(parsedUrl);
-  vulnerabilities.push(...sslVulnerabilities);
+  vulnerabilities.push(...sslVulnerabilities.map(v => ({
+    ...v,
+    scanId: scan.id,
+    severity: v.severity.toString()
+  })));
 
   return {
     serverInfo,
