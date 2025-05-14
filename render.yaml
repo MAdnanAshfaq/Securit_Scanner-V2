@@ -1,4 +1,4 @@
- services:
+services:
   - type: web
     name: security-scanner
     env: node
@@ -11,3 +11,4 @@
         value: 18.17.0
     healthCheckPath: /
     autoDeploy: true
+    plan: free
