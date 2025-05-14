@@ -1,4 +1,4 @@
-import CryptoJS from 'crypto-js';
+import CryptoJS from 'crypto-js/lib/crypto-js.js';
 
 export const md5 = (data: string) => CryptoJS.MD5(data).toString();
 export const sha256 = (data: string) => CryptoJS.SHA256(data).toString();

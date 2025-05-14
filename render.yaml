@@ -21,3 +21,6 @@ services:
         - shared/**
         - vite.config.ts
         - tsconfig.json
+    envVars:
+      - key: NODE_OPTIONS
+        value: --experimental-specifier-resolution=node
