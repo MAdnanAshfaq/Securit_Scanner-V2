@@ -1,4 +1,4 @@
-import CryptoJS from 'crypto-js';
+const CryptoJS = require('crypto-js');
 
 // Re-export all the crypto functions we need
 export const md5 = (data: string) => CryptoJS.MD5(data).toString();
