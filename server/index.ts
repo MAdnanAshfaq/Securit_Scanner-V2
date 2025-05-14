@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
@@ -60,11 +61,11 @@ app.use((req, res, next) => {
   // this serves both the API and the client
   const tryPort = async (port: number): Promise<number> => {
     try {
+      const host = process.env.HOST || (process.env.NODE_ENV === "development" ? "127.0.0.1" : "0.0.0.0");
       await new Promise((resolve, reject) => {
         server.listen({
           port,
-          host: "0.0.0.0",
-          reusePort: true,
+          host,
         }, () => resolve(port)).on('error', reject);
       });
       return port;
