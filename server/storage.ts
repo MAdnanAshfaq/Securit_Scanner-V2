@@ -113,6 +113,19 @@ export class DatabaseStorage implements IStorage {
       .from(schema.vulnerabilities)
       .where(eq(schema.vulnerabilities.scanId, scanId));
   }
+
+  async insertVulnerability(vulnerability: {
+    name: string;
+    scanId: number;
+    description: string;
+    severity: string;
+    location?: string | null;
+    details?: string | null;
+    recommendation?: string | null;
+    learnMoreUrl?: string | null;
+  }): Promise<void> {
+    // Implementation of insertVulnerability method
+  }
 }
 
 // Create and export the storage instance

@@ -1,4 +1,3 @@
-
 import { InsertScan, InsertVulnerability, RiskLevel, ServerInfo } from "@shared/schema";
 import { storage } from "./storage";
 import https from "https";
@@ -302,4 +301,79 @@ async function getHeaders(url: string): Promise<Record<string, string>> {
     
     req.end();
   });
+}
+
+async function checkXSSVulnerabilities(url: string, scanId: number) {
+  // ... existing code ...
+  await storage.insertVulnerability({
+    name: 'XSS Vulnerability',
+    scanId,
+    description: 'Cross-Site Scripting vulnerability detected',
+    severity: RiskLevel.HIGH,
+    location: url,
+    details: 'The application is vulnerable to XSS attacks',
+    recommendation: 'Implement proper input validation and output encoding',
+    learnMoreUrl: 'https://owasp.org/www-community/attacks/xss/'
+  });
+  // ... existing code ...
+}
+
+async function checkSQLInjectionVulnerabilities(url: string, scanId: number) {
+  // ... existing code ...
+  await storage.insertVulnerability({
+    name: 'SQL Injection Vulnerability',
+    scanId,
+    description: 'SQL Injection vulnerability detected',
+    severity: RiskLevel.HIGH,
+    location: url,
+    details: 'The application is vulnerable to SQL injection attacks',
+    recommendation: 'Use parameterized queries and input validation',
+    learnMoreUrl: 'https://owasp.org/www-community/attacks/SQL_Injection'
+  });
+  // ... existing code ...
+}
+
+async function checkCSRFVulnerabilities(url: string, scanId: number) {
+  // ... existing code ...
+  await storage.insertVulnerability({
+    name: 'CSRF Vulnerability',
+    scanId,
+    description: 'Cross-Site Request Forgery vulnerability detected',
+    severity: RiskLevel.MEDIUM,
+    location: url,
+    details: 'The application is vulnerable to CSRF attacks',
+    recommendation: 'Implement CSRF tokens and SameSite cookies',
+    learnMoreUrl: 'https://owasp.org/www-community/attacks/csrf'
+  });
+  // ... existing code ...
+}
+
+async function checkFileUploadVulnerabilities(url: string, scanId: number) {
+  // ... existing code ...
+  await storage.insertVulnerability({
+    name: 'Unsafe File Upload',
+    scanId,
+    description: 'Unsafe file upload vulnerability detected',
+    severity: RiskLevel.HIGH,
+    location: url,
+    details: 'The application allows unsafe file uploads',
+    recommendation: 'Implement strict file type validation and scanning',
+    learnMoreUrl: 'https://owasp.org/www-community/vulnerabilities/Unrestricted_File_Upload'
+  });
+  // ... existing code ...
+}
+
+async function checkDirectoryTraversalVulnerabilities(url: string, scanId: number) {
+  // ... existing code ...
+  await storage.insertVulnerability({
+    name: 'Directory Traversal',
+    scanId,
+    description: 'Directory traversal vulnerability detected',
+    severity: RiskLevel.HIGH,
+    location: url,
+    details: 'The application is vulnerable to directory traversal attacks',
+    recommendation: 'Implement proper path validation and sanitization',
+    learnMoreUrl: 'https://owasp.org/www-community/attacks/Path_Traversal'
+  });
+  // ... existing code ...
 }
