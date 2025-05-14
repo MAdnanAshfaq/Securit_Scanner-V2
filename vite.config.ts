@@ -18,18 +18,11 @@ export default defineConfig({
       "@": path.resolve(import.meta.dirname, "client", "src"),
       "@shared": path.resolve(import.meta.dirname, "shared"),
       "@assets": path.resolve(import.meta.dirname, "attached_assets"),
-      'crypto-js': 'crypto-js/lib/crypto-js.js',
     },
   },
   root: path.resolve(import.meta.dirname, "client"),
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
-    rollupOptions: {
-      external: ['crypto-js', 'crypto-js/*'],
-    },
-  },
-  optimizeDeps: {
-    include: ['crypto-js'],
   },
 });

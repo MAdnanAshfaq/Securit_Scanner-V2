@@ -12,3 +12,12 @@ services:
     healthCheckPath: /
     autoDeploy: true
     plan: free
+    buildFilter:
+      paths:
+        - package.json
+        - package-lock.json
+        - server/**
+        - client/**
+        - shared/**
+        - vite.config.ts
+        - tsconfig.json
