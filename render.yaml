@@ -2,13 +2,22 @@ services:
   - type: web
     name: security-scanner
     env: node
-    buildCommand: npm install
+    buildCommand: |
+      npm install
+      npm run clean
+      npm run build:server
+      ls -la dist/server
+      npm run build:client
     startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
         sync: false
+      - key: NODE_VERSION
+        value: 18.17.0
+      - key: NODE_OPTIONS
+        value: --experimental-specifier-resolution=node
     healthCheckPath: /
     autoDeploy: true
     plan: free
@@ -21,6 +30,4 @@ services:
         - shared/**
         - vite.config.ts
         - tsconfig.json
-    envVars:
-      - key: NODE_OPTIONS
-        value: --experimental-specifier-resolution=node
+        - tsconfig.server.json
