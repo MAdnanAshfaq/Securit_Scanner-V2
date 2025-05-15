@@ -23,8 +23,8 @@ export async function scanWebsite(url: string) {
     // Create scan record
     const scan: InsertScan = {
       url: normalizedUrl,
-      startTime: new Date(),
       status: "in-progress",
+      startTime: new Date(),
     };
     
     const newScan = await storage.createScan(scan);
@@ -49,6 +49,7 @@ export async function scanWebsite(url: string) {
       await storage.createVulnerability({
         ...vuln,
         scanId: newScan.id,
+        severity: vuln.severity.toString()
       });
     }
     
@@ -249,8 +250,9 @@ async function analyzeSecurityHeaders(headers: Record<string, string>, url: URL)
     if (!headers[header]) {
       vulnerabilities.push({
         name: config.name,
+        scanId: 0, // This will be updated when the vulnerability is added to the scan
         description: `The ${header} security header is missing`,
-        severity: config.severity,
+        severity: config.severity.toString(),
         location: url.toString(),
         details: `Current headers: ${JSON.stringify(headers)}`,
         recommendation: config.recommendation,
@@ -266,8 +268,9 @@ async function analyzeSSLConfiguration(url: URL): Promise<InsertVulnerability[]>
   if (url.protocol !== 'https:') {
     return [{
       name: 'Insecure Protocol',
+      scanId: 0, // This will be updated when the vulnerability is added to the scan
       description: 'The site is not using HTTPS',
-      severity: RiskLevel.HIGH,
+      severity: RiskLevel.HIGH.toString(),
       location: url.toString(),
       details: 'Site is using unencrypted HTTP',
       recommendation: 'Enable HTTPS with a valid SSL certificate',

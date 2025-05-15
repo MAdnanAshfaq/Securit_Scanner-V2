@@ -60,7 +60,7 @@ export class DatabaseStorage implements IStorage {
       mediumRiskCount: 0,
       lowRiskCount: 0,
       infoCount: 0
-    };
+    } as const;
     
     const [scan] = await db.insert(schema.scans).values(scanData).returning();
     return scan;

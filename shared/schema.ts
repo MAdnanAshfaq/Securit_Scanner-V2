@@ -33,6 +33,14 @@ export const scans = pgTable("scans", {
 
 export const insertScanSchema = createInsertSchema(scans).pick({
   url: true,
+  status: true,
+  startTime: true,
+  endTime: true,
+  serverInfo: true,
+  highRiskCount: true,
+  mediumRiskCount: true,
+  lowRiskCount: true,
+  infoCount: true
 });
 
 export type InsertScan = z.infer<typeof insertScanSchema>;

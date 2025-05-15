@@ -1072,10 +1072,10 @@ async function performBruteForce(
       
       const formData: Record<string, string> = {};
       if (usernameField) {
-        formData[usernameField] = username;
+        formData['username'] = username;
       }
       if (passwordField) {
-        formData[passwordField] = password;
+        formData['password'] = password;
       }
       
       // Get any cookies from the login page
@@ -1544,7 +1544,7 @@ async function performPrivilegeEscalation(
         testUrl.toString(),
         test.method,
         test.method !== 'GET' ? test.payload : undefined,
-        test.headers
+        test.headers || {}
       );
       
       // Check for potential success indicators
