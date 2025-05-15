@@ -2,13 +2,13 @@ services:
   - type: web
     name: security-scanner
     env: node
-    buildCommand: npm install && npm run build
-    startCommand: npm run start
+    buildCommand: npm install
+    startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
-      - key: NODE_VERSION
-        value: 18.17.0
+      - key: DATABASE_URL
+        sync: false
     healthCheckPath: /
     autoDeploy: true
     plan: free
